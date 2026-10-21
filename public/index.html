@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Meet Clone</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(0.8); opacity: 1; }
+      100% { transform: translateY(-120px) scale(1.4); opacity: 0; }
+    }
+    .reaction-bubble {
+      position: absolute;
+      animation: floatUp 2s ease-out forwards;
+      pointer-events: none;
+      font-size: 2rem;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="bg-[#202124] text-white min-h-screen flex flex-col font-sans overflow-hidden select-none">
+
+  <!-- ================= LOBBY (TELA DE ENTRADA / GREEN ROOM) ================= -->
+  <div id="lobbyScreen" class="fixed inset-0 bg-[#202124] z-50 flex items-center justify-center p-6">
+    <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+      
+      <!-- Preview do Vídeo do Usuário -->
+      <div class="md:col-span-7 flex flex-col items-center">
+        <div class="relative w-full aspect-video bg-[#3c4043] rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center border border-white/10">
+          <video id="lobbyVideo" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
+          
+          <!-- Avatar se a câmera estiver desligada -->
+          <div id="lobbyAvatar" class="hidden absolute inset-0 bg-[#3c4043] flex items-center justify-center">
+            <div id="lobbyAvatarCircle" class="w-24 h-24 rounded-full bg-indigo-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
+              U
+            </div>
+          </div>
+
+          <!-- Botões Flutuantes de Teste no Preview -->
+          <div class="absolute bottom-4 flex items-center gap-4">
+            <button id="btnLobbyToggleMic" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] border border-white/20 text-white flex items-center justify-center transition shadow-md">
+              <svg id="lobbyMicIconOn" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+              <svg id="lobbyMicIconOff" class="w-5 h-5 text-red-400 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/></svg>
+            </button>
+            <button id="btnLobbyToggleCam" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] border border-white/20 text-white flex items-center justify-center transition shadow-md">
+              <svg id="lobbyCamIconOn" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+              <svg id="lobbyCamIconOff" class="w-5 h-5 text-red-400 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2zM16 16.73L5.27 6H16v10.73z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulário de Entrada -->
+      <div class="md:col-span-5 flex flex-col gap-5">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-white">Pronto para participar?</h1>
+          <p class="text-sm text-gray-400 mt-1">Conecte-se com sua equipe instantaneamente.</p>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-300 mb-1">Seu Nome:</label>
+            <input id="inputUserName" type="text" value="Douglas" class="w-full bg-[#3c4043] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-300 mb-1">Código da Reunião (Sala):</label>
+            <input id="inputRoomId" type="text" value="sprint-equipe" class="w-full bg-[#3c4043] border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-gray-400 focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+
+        <button id="btnJoinMeeting" class="w-full bg-[#1a73e8] hover:bg-[#1557b0] text-white font-medium py-3 rounded-full text-sm transition shadow-lg flex items-center justify-center gap-2">
+          <span>Participar agora</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+
+        <p class="text-[11px] text-gray-500 text-center">
+          Dica: Você pode abrir esta mesma página em outra aba para testar a chamada entre duas pessoas!
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ================= SALA DE REUNIÃO ATIVA ================= -->
+  <div id="meetingRoom" class="hidden flex-1 flex flex-col h-screen overflow-hidden">
+    
+    <!-- Topbar Sutil -->
+    <header class="h-12 px-6 flex items-center justify-between text-xs text-gray-400 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <span class="font-medium text-white text-sm flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Google Meet
+        </span>
+        <span>|</span>
+        <span id="roomCodeDisplay" class="font-mono text-gray-300">sprint-equipe</span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <button id="btnCopyLinkTop" class="hover:text-white transition flex items-center gap-1.5 bg-[#3c4043]/60 px-3 py-1 rounded-full border border-white/10">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <span>Copiar link</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Conteúdo Principal: Grade de Vídeos + Lateral de Chat/Pessoas -->
+    <div class="flex-1 flex overflow-hidden p-4 gap-4 relative">
+      
+      <!-- Container das Reações Flutuantes -->
+      <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none z-40"></div>
+
+      <!-- Grade Dinâmica dos Participantes -->
+      <div id="videoGridContainer" class="flex-1 flex items-center justify-center overflow-hidden">
+        <div id="videoGrid" class="w-full h-full grid gap-4 p-2 transition-all duration-300 grid-cols-1">
+          <!-- Os cards de vídeo são injetados dinamicamente aqui -->
+        </div>
+      </div>
+
+      <!-- Painel Lateral (Gaveta de Chat e Participantes) -->
+      <aside id="sidePanel" class="hidden w-80 bg-[#2d2e30] rounded-2xl border border-white/10 flex-col overflow-hidden shadow-2xl">
+        <!-- Cabeçalho da Gaveta -->
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <button id="tabChat" class="text-sm font-semibold text-white border-b-2 border-blue-500 pb-1">Mensagens na chamada</button>
+            <button id="tabPeople" class="text-sm font-medium text-gray-400 hover:text-white pb-1">Pessoas (<span id="peopleCount">1</span>)</button>
+          </div>
+          <button id="btnClosePanel" class="text-gray-400 hover:text-white text-lg">✕</button>
+        </div>
+
+        <!-- Conteúdo do Chat -->
+        <div id="panelChatContent" class="flex-1 flex flex-col overflow-hidden p-4">
+          <div id="chatMessages" class="flex-1 overflow-y-auto flex flex-col gap-3 pr-1 text-xs">
+            <div class="bg-[#3c4043]/50 p-2.5 rounded-lg text-gray-300 leading-relaxed">
+              As mensagens são visíveis apenas para as pessoas que estão na chamada e são apagadas quando a reunião termina.
+            </div>
+          </div>
+          
+          <div class="mt-3 pt-3 border-t border-white/10 flex items-center gap-2">
+            <input id="inputChatMessage" type="text" placeholder="Envie uma mensagem para todos" class="flex-1 bg-[#3c4043] border border-white/10 rounded-full px-4 py-2 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-blue-500">
+            <button id="btnSendChat" class="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-500 flex items-center justify-center text-white transition">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Conteúdo de Pessoas -->
+        <div id="panelPeopleContent" class="hidden flex-1 overflow-y-auto p-4 flex flex-col gap-2 text-xs">
+          <div id="peopleList" class="flex flex-col gap-2">
+            <!-- Participantes listados dinamicamente -->
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- ================= BARRA DE CONTROLES INFERIOR FLUTUANTE ================= -->
+    <footer class="h-20 bg-[#202124] px-6 flex items-center justify-between border-t border-white/5">
+      
+      <!-- Esquerda: Hora e Código da Reunião -->
+      <div class="hidden sm:flex items-center gap-3 w-1/4">
+        <span id="currentTimeDisplay" class="text-sm font-medium text-white font-mono">19:30</span>
+        <span class="text-gray-600">•</span>
+        <span id="roomCodeBottom" class="text-xs font-mono text-gray-300">sprint-equipe</span>
+      </div>
+
+      <!-- Centro: Botões de Ação Principais -->
+      <div class="flex items-center justify-center gap-3 flex-1 sm:flex-initial">
+        
+        <!-- Microfone -->
+        <button id="btnToggleMic" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Ativar/Desativar microfone">
+          <svg id="micIconOn" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+          <svg id="micIconOff" class="w-5 h-5 text-white hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/></svg>
+        </button>
+
+        <!-- Câmera -->
+        <button id="btnToggleCam" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Ativar/Desativar câmera">
+          <svg id="camIconOn" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+          <svg id="camIconOff" class="w-5 h-5 text-white hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2zM16 16.73L5.27 6H16v10.73z"/></svg>
+        </button>
+
+        <!-- Levantar a Mão -->
+        <button id="btnRaiseHand" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Levantar a mão">
+          <span class="text-xl">✋</span>
+        </button>
+
+        <!-- Menu de Reações -->
+        <div class="relative">
+          <button id="btnReactionsMenu" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Enviar reação">
+            <span class="text-lg">😊</span>
+          </button>
+          
+          <!-- Popover de Emojis -->
+          <div id="reactionsPopup" class="hidden absolute bottom-16 left-1/2 -translate-x-1/2 bg-[#3c4043] border border-white/10 rounded-full px-3 py-1.5 shadow-2xl flex items-center gap-2">
+            <button class="reaction-btn text-xl hover:scale-125 transition">💖</button>
+            <button class="reaction-btn text-xl hover:scale-125 transition">👍</button>
+            <button class="reaction-btn text-xl hover:scale-125 transition">🎉</button>
+            <button class="reaction-btn text-xl hover:scale-125 transition">👏</button>
+            <button class="reaction-btn text-xl hover:scale-125 transition">😂</button>
+            <button class="reaction-btn text-xl hover:scale-125 transition">😮</button>
+          </div>
+        </div>
+
+        <!-- Compartilhar Tela -->
+        <button id="btnScreenShare" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Apresentar agora">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.11-.9-2-2-2H4c-1.11 0-2 .89-2 2v10c0 1.1.89 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6zm9 3l3 3h-2v3h-2v-3H10l3-3z"/></svg>
+        </button>
+
+        <!-- Adicionar Participante Demo (Simulação rápida para teste individual) -->
+        <button id="btnAddDemoPeer" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Simular entrada de participante">+👤</button>
+
+        <!-- Sair da Chamada -->
+        <button id="btnLeaveCall" class="h-12 px-6 rounded-full bg-[#ea4335] hover:bg-[#d93025] flex items-center justify-center text-white font-medium transition shadow-md gap-2" title="Sair da chamada">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 0 1 0-1.37C3.42 8.5 7.44 6.8 12 6.8c4.56 0 8.58 1.7 11.71 4.91.38.38.38.99 0 1.37l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+          <span class="text-xs font-semibold">Sair</span>
+        </button>
+      </div>
+
+      <!-- Direita: Informações, Pessoas e Chat -->
+      <div class="hidden sm:flex items-center justify-end gap-3 w-1/4">
+        <button id="btnToggleSideChat" class="w-10 h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Chat com todos">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+          <span id="unreadBadge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-blue-500 rounded-full"></span>
+        </button>
+        <button id="btnToggleSidePeople" class="w-10 h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition" title="Mostrar participantes">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        </button>
+      </div>
+
+    </footer>
+  </div>
+
+
+  <!-- ================= LÓGICA WEBRTC & CONTROLES ================= -->
+  <script>
+    // Elementos Lobby
+    const lobbyScreen = document.getElementById('lobbyScreen');
+    const lobbyVideo = document.getElementById('lobbyVideo');
+    const lobbyAvatar = document.getElementById('lobbyAvatar');
+    const lobbyAvatarCircle = document.getElementById('lobbyAvatarCircle');
+    const btnLobbyToggleMic = document.getElementById('btnLobbyToggleMic');
+    const btnLobbyToggleCam = document.getElementById('btnLobbyToggleCam');
+    const lobbyMicIconOn = document.getElementById('lobbyMicIconOn');
+    const lobbyMicIconOff = document.getElementById('lobbyMicIconOff');
+    const lobbyCamIconOn = document.getElementById('lobbyCamIconOn');
+    const lobbyCamIconOff = document.getElementById('lobbyCamIconOff');
+    const inputUserName = document.getElementById('inputUserName');
+    const inputRoomId = document.getElementById('inputRoomId');
+    const btnJoinMeeting = document.getElementById('btnJoinMeeting');
+
+    // Elementos Sala
+    const meetingRoom = document.getElementById('meetingRoom');
+    const videoGrid = document.getElementById('videoGrid');
+    const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+    const roomCodeBottom = document.getElementById('roomCodeBottom');
+    const currentTimeDisplay = document.getElementById('currentTimeDisplay');
+    const btnToggleMic = document.getElementById('btnToggleMic');
+    const btnToggleCam = document.getElementById('btnToggleCam');
+    const micIconOn = document.getElementById('micIconOn');
+    const micIconOff = document.getElementById('micIconOff');
+    const camIconOn = document.getElementById('camIconOn');
+    const camIconOff = document.getElementById('camIconOff');
+    const btnRaiseHand = document.getElementById('btnRaiseHand');
+    const btnScreenShare = document.getElementById('btnScreenShare');
+    const btnReactionsMenu = document.getElementById('btnReactionsMenu');
+    const reactionsPopup = document.getElementById('reactionsPopup');
+    const reactionsOverlay = document.getElementById('reactionsOverlay');
+    const btnAddDemoPeer = document.getElementById('btnAddDemoPeer');
+    const btnLeaveCall = document.getElementById('btnLeaveCall');
+    const btnCopyLinkTop = document.getElementById('btnCopyLinkTop');
+
+    // Elementos Lateral
+    const sidePanel = document.getElementById('sidePanel');
+    const btnClosePanel = document.getElementById('btnClosePanel');
+    const tabChat = document.getElementById('tabChat');
+    const tabPeople = document.getElementById('tabPeople');
+    const panelChatContent = document.getElementById('panelChatContent');
+    const panelPeopleContent = document.getElementById('panelPeopleContent');
+    const chatMessages = document.getElementById('chatMessages');
+    const inputChatMessage = document.getElementById('inputChatMessage');
+    const btnSendChat = document.getElementById('btnSendChat');
+    const btnToggleSideChat = document.getElementById('btnToggleSideChat');
+    const btnToggleSidePeople = document.getElementById('btnToggleSidePeople');
+    const peopleList = document.getElementById('peopleList');
+    const peopleCount = document.getElementById('peopleCount');
+    const unreadBadge = document.getElementById('unreadBadge');
+
+    // Estado da Aplicação
+    let localStream = null;
+    let localScreenStream = null;
+    let isMicMuted = false;
+    let isCamOff = false;
+    let isHandRaised = false;
+    let isScreenSharing = false;
+    let myPeerId = null;
+    let myName = 'Douglas';
+    let currentRoom = 'sprint-equipe';
+
+    // WebRTC Peers: Map<peerId, { pc: RTCPeerConnection, name: string, stream: MediaStream }>
+    const peers = new Map();
+    let ws = null;
+
+    // Configuração ICE STUN pública do Google
+    const rtcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
+
+    // Atualização do Relógio
+    function updateClock() {
+      const now = new Date();
+      currentTimeDisplay.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 1. Inicialização do Lobby (Câmera & Microfone locais)
+    async function initLobby() {
+      // Ler sala da URL se houver (ex: ?room=design-review)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('room')) {
+        inputRoomId.value = urlParams.get('room');
+      }
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+          audio: true
+        });
+        lobbyVideo.srcObject = localStream;
+      } catch (err) {
+        console.warn('Câmera ou microfone não puderam ser abertos automaticamente:', err);
+        setCamState(true);
+      }
+    }
+
+    // Controles do Lobby
+    btnLobbyToggleMic.addEventListener('click', () => {
+      setMicState(!isMicMuted);
+    });
+
+    btnLobbyToggleCam.addEventListener('click', () => {
+      setCamState(!isCamOff);
+    });
+
+    function setMicState(muted) {
+      isMicMuted = muted;
+      if (localStream) {
+        localStream.getAudioTracks().forEach(t => t.enabled = !isMicMuted);
+      }
+      lobbyMicIconOn.classList.toggle('hidden', isMicMuted);
+      lobbyMicIconOff.classList.toggle('hidden', !isMicMuted);
+      micIconOn.classList.toggle('hidden', isMicMuted);
+      micIconOff.classList.toggle('hidden', !isMicMuted);
+      btnToggleMic.classList.toggle('bg-red-600', isMicMuted);
+      btnToggleMic.classList.toggle('hover:bg-red-500', isMicMuted);
+      btnToggleMic.classList.toggle('bg-[#3c4043]', !isMicMuted);
+    }
+
+    function setCamState(off) {
+      isCamOff = off;
+      if (localStream) {
+        localStream.getVideoTracks().forEach(t => t.enabled = !isCamOff);
+      }
+      lobbyVideo.classList.toggle('hidden', isCamOff);
+      lobbyAvatar.classList.toggle('hidden', !isCamOff);
+      lobbyCamIconOn.classList.toggle('hidden', isCamOff);
+      lobbyCamIconOff.classList.toggle('hidden', !isCamOff);
+      camIconOn.classList.toggle('hidden', isCamOff);
+      camIconOff.classList.toggle('hidden', !isCamOff);
+      btnToggleCam.classList.toggle('bg-red-600', isCamOff);
+      btnToggleCam.classList.toggle('hover:bg-red-500', isCamOff);
+      btnToggleCam.classList.toggle('bg-[#3c4043]', !isCamOff);
+
+      // Atualiza card local na sala se já tiver entrado
+      const myCardVideo = document.getElementById('video_local');
+      const myCardAvatar = document.getElementById('avatar_local');
+      if (myCardVideo && myCardAvatar) {
+        myCardVideo.classList.toggle('hidden', isCamOff);
+        myCardAvatar.classList.toggle('hidden', !isCamOff);
+      }
+    }
+
+    // 2. Entrar na Reunião
+    btnJoinMeeting.addEventListener('click', () => {
+      myName = inputUserName.value.trim() || 'Participante';
+      currentRoom = inputRoomId.value.trim() || 'geral';
+
+      lobbyAvatarCircle.textContent = myName.charAt(0).toUpperCase();
+      roomCodeDisplay.textContent = currentRoom;
+      roomCodeBottom.textContent = currentRoom;
+
+      lobbyScreen.classList.add('hidden');
+      meetingRoom.classList.remove('hidden');
+
+      // Cria o Card Local de Vídeo
+      createVideoCard('local', myName, localStream, true);
+      setupAudioMonitoring(localStream, 'local');
+
+      // Conecta ao Servidor de Sinalização WebRTC
+      connectSignaling();
+      updatePeopleList();
+    });
+
+    // 3. Conexão com o Servidor de Sinalização (WebSockets)
+    function connectSignaling() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${location.host}/signaling`);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: 'join',
+          roomId: currentRoom,
+          name: myName
+        }));
+      };
+
+      ws.onmessage = async e => {
+        try {
+          const msg = JSON.parse(e.data);
+
+          // Entrada na sala confirmada
+          if (msg.type === 'room_joined') {
+            myPeerId = msg.peerId;
+            console.log('Entrei na sala com ID:', myPeerId);
+
+            // Inicia conexão WebRTC com cada usuário que já estava na sala
+            for (const peer of msg.peers) {
+              await initiatePeerConnection(peer.peerId, peer.name, true);
+            }
+            updatePeopleList();
+          }
+
+          // Novo membro entrou na sala
+          else if (msg.type === 'peer_joined') {
+            console.log('Novo participante:', msg.name, msg.peerId);
+            // Aguarda a oferta dele
+            updatePeopleList();
+          }
+
+          // Mensagens de Sinalização WebRTC (SDP / ICE)
+          else if (msg.type === 'signal') {
+            await handleSignalingMessage(msg.senderPeerId, msg.name, msg.signalData);
+          }
+
+          // Membro saiu da sala
+          else if (msg.type === 'peer_left') {
+            removePeer(msg.peerId);
+            updatePeopleList();
+          }
+
+          // Chat recebido
+          else if (msg.type === 'chat') {
+            addChatMessage(msg.senderName, msg.text, msg.time, msg.senderPeerId === myPeerId);
+          }
+
+          // Reação recebida
+          else if (msg.type === 'reaction') {
+            spawnReactionBubble(msg.data);
+          }
+
+          // Mão levantada
+          else if (msg.type === 'raise_hand') {
+            toggleHandBadge(msg.senderPeerId, msg.data.raised);
+          }
+
+        } catch (err) {
+          console.error('Erro ao processar mensagem do servidor:', err);
+        }
+      };
+    }
+
+    // 4. Fluxo WebRTC RTCPeerConnection (P2P real)
+    async function initiatePeerConnection(targetPeerId, targetName, isInitiator) {
+      const pc = new RTCPeerConnection(rtcConfig);
+      peers.set(targetPeerId, { pc, name: targetName, stream: null });
+
+      // Adiciona faixas locais (câmera e microfone)
+      if (localStream) {
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+      }
+
+      // Envia candidatos ICE para o par
+      pc.onicecandidate = event => {
+        if (event.candidate) {
+          ws.send(JSON.stringify({
+            type: 'signal',
+            targetPeerId: targetPeerId,
+            signalData: { candidate: event.candidate }
+          }));
+        }
+      };
+
+      // Recebe a stream de vídeo/áudio do par remoto
+      pc.ontrack = event => {
+        console.log('Faixa de mídia remota recebida de:', targetName);
+        const remoteStream = event.streams[0];
+        peers.get(targetPeerId).stream = remoteStream;
+
+        let card = document.getElementById(`card_${targetPeerId}`);
+        if (!card) {
+          createVideoCard(targetPeerId, targetName, remoteStream, false);
+          setupAudioMonitoring(remoteStream, targetPeerId);
+          updatePeopleList();
+        }
+      };
+
+      // Se for o iniciador, cria a Oferta SDP
+      if (isInitiator) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ws.send(JSON.stringify({
+          type: 'signal',
+          targetPeerId: targetPeerId,
+          signalData: { sdp: pc.localDescription }
+        }));
+      }
+
+      return pc;
+    }
+
+    async function handleSignalingMessage(senderPeerId, senderName, data) {
+      let peer = peers.get(senderPeerId);
+
+      if (!peer) {
+        await initiatePeerConnection(senderPeerId, senderName, false);
+        peer = peers.get(senderPeerId);
+      }
+
+      const pc = peer.pc;
+
+      if (data.sdp) {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        if (data.sdp.type === 'offer') {
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          ws.send(JSON.stringify({
+            type: 'signal',
+            targetPeerId: senderPeerId,
+            signalData: { sdp: pc.localDescription }
+          }));
+        }
+      } else if (data.candidate) {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.warn(e));
+      }
+    }
+
+    function removePeer(peerId) {
+      if (peers.has(peerId)) {
+        peers.get(peerId).pc.close();
+        peers.delete(peerId);
+      }
+      const card = document.getElementById(`card_${peerId}`);
+      if (card) card.remove();
+      updateGridLayout();
+    }
+
+    // 5. Interface da Grade Dinâmica de Vídeos (CSS Grid Inteligente)
+    function createVideoCard(id, name, stream, isLocal) {
+      const card = document.createElement('div');
+      card.id = `card_${id}`;
+      card.className = 'relative bg-[#3c4043] rounded-2xl overflow-hidden shadow-xl border border-white/5 flex items-center justify-center transition-all duration-300';
+
+      const video = document.createElement('video');
+      video.id = `video_${id}`;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.className = `w-full h-full object-cover ${isLocal ? 'transform -scale-x-100' : ''}`;
+      if (isLocal) video.muted = true;
+      if (stream) video.srcObject = stream;
+
+      // Avatar se a câmera estiver desligada
+      const avatar = document.createElement('div');
+      avatar.id = `avatar_${id}`;
+      avatar.className = 'hidden absolute inset-0 bg-[#3c4043] flex items-center justify-center';
+      avatar.innerHTML = `<div class="w-20 h-20 rounded-full bg-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg">${name.charAt(0).toUpperCase()}</div>`;
+
+      // Badge com Nome no Canto Inferior Esquerdo
+      const nameBadge = document.createElement('div');
+      nameBadge.className = 'absolute bottom-3 left-3 bg-[#202124]/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-2 border border-white/10 shadow';
+      nameBadge.innerHTML = `
+        <span class="truncate max-w-[140px]">${isLocal ? name + ' (Você)' : name}</span>
+        <span id="audioDot_${id}" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+      `;
+
+      // Badge de Mão Levantada
+      const handBadge = document.createElement('div');
+      handBadge.id = `handBadge_${id}`;
+      handBadge.className = 'hidden absolute top-3 right-3 bg-amber-500 text-slate-950 px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 animate-bounce';
+      handBadge.innerHTML = `<span>✋</span> Levantou a mão`;
+
+      card.appendChild(video);
+      card.appendChild(avatar);
+      card.appendChild(nameBadge);
+      card.appendChild(handBadge);
+      videoGrid.appendChild(card);
+
+      updateGridLayout();
+    }
+
+    function updateGridLayout() {
+      const count = videoGrid.children.length;
+      videoGrid.className = 'w-full h-full grid gap-4 p-2 transition-all duration-300';
+
+      if (count === 1) {
+        videoGrid.classList.add('grid-cols-1');
+      } else if (count === 2) {
+        videoGrid.classList.add('grid-cols-1', 'md:grid-cols-2');
+      } else if (count <= 4) {
+        videoGrid.classList.add('grid-cols-2');
+      } else if (count <= 6) {
+        videoGrid.classList.add('grid-cols-2', 'md:grid-cols-3');
+      } else {
+        videoGrid.classList.add('grid-cols-3', 'md:grid-cols-4');
+      }
+    }
+
+    // 6. Detecção de Voz Ativa (Active Speaker Border) via Web Audio API
+    function setupAudioMonitoring(stream, id) {
+      try {
+        if (!stream || stream.getAudioTracks().length === 0) return;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(stream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        source.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const card = document.getElementById(`card_${id}`);
+        const audioDot = document.getElementById(`audioDot_${id}`);
+
+        function detectSpeech() {
+          analyser.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          const avg = sum / dataArray.length;
+
+          // Se o volume médio for alto o suficiente, marca como falando
+          if (avg > 18) {
+            if (card) card.classList.add('ring-4', 'ring-blue-500');
+            if (audioDot) audioDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+          } else {
+            if (card) card.classList.remove('ring-4', 'ring-blue-500');
+            if (audioDot) audioDot.className = 'w-2 h-2 rounded-full bg-gray-500';
+          }
+          requestAnimationFrame(detectSpeech);
+        }
+        detectSpeech();
+      } catch (e) {
+        console.warn('Áudio monitoring não suportado:', e);
+      }
+    }
+
+    // 7. Compartilhamento de Tela (Screen Share nativo do navegador)
+    btnScreenShare.addEventListener('click', async () => {
+      if (!isScreenSharing) {
+        try {
+          localScreenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          const screenTrack = localScreenStream.getVideoTracks()[0];
+
+          // Cria card de tela compartilhada
+          createVideoCard('screen_share', `${myName} (Apresentando)`, localScreenStream, false);
+
+          // Substitui a faixa nos peers WebRTC existentes
+          for (const peer of peers.values()) {
+            const sender = peer.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+            if (sender) sender.replaceTrack(screenTrack);
+          }
+
+          isScreenSharing = true;
+          btnScreenShare.classList.add('bg-blue-600', 'text-white');
+
+          screenTrack.onended = () => {
+            stopScreenSharing();
+          };
+        } catch (err) {
+          console.warn('Compartilhamento cancelado pelo usuário.', err);
+        }
+      } else {
+        stopScreenSharing();
+      }
+    });
+
+    function stopScreenSharing() {
+      if (localScreenStream) {
+        localScreenStream.getTracks().forEach(t => t.stop());
+        localScreenStream = null;
+      }
+      const card = document.getElementById('card_screen_share');
+      if (card) card.remove();
+
+      // Restaura a câmera original nos peers
+      if (localStream) {
+        const camTrack = localStream.getVideoTracks()[0];
+        for (const peer of peers.values()) {
+          const sender = peer.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (sender && camTrack) sender.replaceTrack(camTrack);
+        }
+      }
+
+      isScreenSharing = false;
+      btnScreenShare.classList.remove('bg-blue-600');
+      updateGridLayout();
+    }
+
+    // 8. Botão Levantar a Mão (✋)
+    btnRaiseHand.addEventListener('click', () => {
+      isHandRaised = !isHandRaised;
+      btnRaiseHand.classList.toggle('bg-amber-500', isHandRaised);
+      btnRaiseHand.classList.toggle('text-slate-950', isHandRaised);
+      toggleHandBadge('local', isHandRaised);
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'raise_hand',
+          data: { raised: isHandRaised }
+        }));
+      }
+    });
+
+    function toggleHandBadge(id, raised) {
+      const badge = document.getElementById(`handBadge_${id}`);
+      if (badge) badge.classList.toggle('hidden', !raised);
+    }
+
+    // 9. Reações (Emojis flutuantes)
+    btnReactionsMenu.addEventListener('click', () => {
+      reactionsPopup.classList.toggle('hidden');
+    });
+
+    document.querySelectorAll('.reaction-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const emoji = btn.textContent;
+        reactionsPopup.classList.add('hidden');
+        spawnReactionBubble(emoji);
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'reaction',
+            data: emoji
+          }));
+        }
+      });
+    });
+
+    function spawnReactionBubble(emoji) {
+      const bubble = document.createElement('div');
+      bubble.className = 'reaction-bubble';
+      bubble.textContent = emoji;
+      bubble.style.left = `${30 + Math.random() * 40}%`;
+      bubble.style.bottom = '100px';
+      reactionsOverlay.appendChild(bubble);
+      setTimeout(() => bubble.remove(), 2000);
+    }
+
+    // 10. Participante Demo (Simulação para teste imediato de grid com 1 usuário só)
+    let demoCount = 0;
+    btnAddDemoPeer.addEventListener('click', () => {
+      demoCount++;
+      const demoId = `demo_${demoCount}`;
+      const demoNames = ['Ana Paula', 'Carlos Eduardo', 'Juliana Lima', 'Roberto Alves'];
+      const demoName = demoNames[(demoCount - 1) % demoNames.length];
+
+      createVideoCard(demoId, demoName, null, false);
+      const avatar = document.getElementById(`avatar_${demoId}`);
+      if (avatar) avatar.classList.remove('hidden');
+
+      // Simulação de voz ativa aleatória
+      setInterval(() => {
+        const card = document.getElementById(`card_${demoId}`);
+        const dot = document.getElementById(`audioDot_${demoId}`);
+        const talking = Math.random() > 0.6;
+        if (card) card.classList.toggle('ring-4', talking);
+        if (card) card.classList.toggle('ring-blue-500', talking);
+        if (dot) dot.className = `w-2 h-2 rounded-full ${talking ? 'bg-emerald-400 animate-ping' : 'bg-gray-500'}`;
+      }, 3000);
+
+      updatePeopleList();
+    });
+
+    // 11. Chat e Painel Lateral
+    btnToggleSideChat.addEventListener('click', () => {
+      sidePanel.classList.remove('hidden');
+      tabChat.click();
+      unreadBadge.classList.add('hidden');
+    });
+
+    btnToggleSidePeople.addEventListener('click', () => {
+      sidePanel.classList.remove('hidden');
+      tabPeople.click();
+    });
+
+    btnClosePanel.addEventListener('click', () => {
+      sidePanel.classList.add('hidden');
+    });
+
+    tabChat.addEventListener('click', () => {
+      tabChat.className = 'text-sm font-semibold text-white border-b-2 border-blue-500 pb-1';
+      tabPeople.className = 'text-sm font-medium text-gray-400 hover:text-white pb-1';
+      panelChatContent.classList.remove('hidden');
+      panelPeopleContent.classList.add('hidden');
+    });
+
+    tabPeople.addEventListener('click', () => {
+      tabPeople.className = 'text-sm font-semibold text-white border-b-2 border-blue-500 pb-1';
+      tabChat.className = 'text-sm font-medium text-gray-400 hover:text-white pb-1';
+      panelPeopleContent.classList.remove('hidden');
+      panelChatContent.classList.add('hidden');
+    });
+
+    btnSendChat.addEventListener('click', sendChat);
+    inputChatMessage.addEventListener('keypress', e => {
+      if (e.key === 'Enter') sendChat();
+    });
+
+    function sendChat() {
+      const text = inputChatMessage.value.trim();
+      if (!text) return;
+      inputChatMessage.value = '';
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'chat',
+          text: text
+        }));
+      }
+    }
+
+    function addChatMessage(sender, text, time, isMe) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'flex flex-col gap-0.5';
+      msgDiv.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="font-semibold ${isMe ? 'text-blue-400' : 'text-gray-300'}">${isMe ? 'Você' : sender}</span>
+          <span class="text-[10px] text-gray-500">${time}</span>
+        </div>
+        <p class="text-gray-200 bg-[#3c4043]/70 px-3 py-2 rounded-xl text-xs leading-relaxed inline-block break-words">${text}</p>
+      `;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      if (sidePanel.classList.contains('hidden')) {
+        unreadBadge.classList.remove('hidden');
+      }
+    }
+
+    function updatePeopleList() {
+      const total = 1 + peers.size + demoCount;
+      peopleCount.textContent = total;
+      peopleList.innerHTML = `
+        <div class="flex items-center justify-between p-2 rounded-lg bg-[#3c4043]/50">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs">${myName.charAt(0).toUpperCase()}</div>
+            <span class="font-medium text-white">${myName} (Você)</span>
+          </div>
+          <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">Organizador</span>
+        </div>
+      `;
+
+      for (const [id, peer] of peers.entries()) {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between p-2 rounded-lg hover:bg-[#3c4043]/30 transition';
+        item.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs">${peer.name.charAt(0).toUpperCase()}</div>
+            <span class="text-gray-200">${peer.name}</span>
+          </div>
+          <span class="text-[10px] text-emerald-400">Ao vivo</span>
+        `;
+        peopleList.appendChild(item);
+      }
+    }
+
+    // Copiar Link da Reunião
+    btnCopyLinkTop.addEventListener('click', () => {
+      const url = `${location.origin}/?room=${encodeURIComponent(currentRoom)}`;
+      navigator.clipboard.writeText(url).then(() => {
+        btnCopyLinkTop.innerHTML = `<span>✓ Link copiado!</span>`;
+        setTimeout(() => {
+          btnCopyLinkTop.innerHTML = `
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Copiar link</span>
+          `;
+        }, 2000);
+      });
+    });
+
+    // Botões de Mídia na Chamada
+    btnToggleMic.addEventListener('click', () => setMicState(!isMicMuted));
+    btnToggleCam.addEventListener('click', () => setCamState(!isCamOff));
+
+    // Sair da Chamada
+    btnLeaveCall.addEventListener('click', () => {
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      if (localScreenStream) localScreenStream.getTracks().forEach(t => t.stop());
+      if (ws) ws.close();
+      window.location.reload();
+    });
+
+    window.addEventListener('DOMContentLoaded', initLobby);
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "google-meet-clone",
+  "version": "1.0.0",
+  "description": "Google Meet clone with WebRTC P2P video conferencing, screen sharing, chat, and reactions",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "webrtc",
+    "google-meet",
+    "video-call",
+    "p2p"
+  ],
+  "author": "Numerax",
+  "license": "MIT"
+}
