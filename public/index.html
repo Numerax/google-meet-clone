@@ -117,15 +117,31 @@
       <!-- Container das Reações Flutuantes -->
       <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none z-40"></div>
 
-      <!-- Grade Dinâmica dos Participantes -->
-      <div id="videoGridContainer" class="flex-1 flex items-center justify-center overflow-hidden">
+      <!-- Grade Dinâmica dos Participantes e Área Spotlight -->
+      <div id="videoGridContainer" class="flex-1 flex flex-col md:flex-row items-center justify-center overflow-hidden gap-3 relative">
+        
+        <!-- Área Spotlight (Apresentação de Tela ou Participante Fixado) -->
+        <div id="spotlightArea" class="hidden flex-1 w-full h-full relative bg-[#18191a] rounded-2xl overflow-hidden border border-white/10 flex items-center justify-center shadow-2xl">
+          <video id="spotlightVideo" class="w-full h-full object-contain" autoplay playsinline></video>
+          
+          <div class="absolute top-3 left-3 bg-[#202124]/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-medium text-white flex items-center gap-2 border border-white/10 shadow z-10">
+            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            <span id="spotlightTitle">Apresentação</span>
+          </div>
+
+          <button id="btnUnpinSpotlight" class="absolute top-3 right-3 bg-[#202124]/80 hover:bg-[#3c4043] text-gray-300 hover:text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border border-white/10 shadow transition z-10" title="Desafixar da tela principal">
+            <span>✕ Fechar destaque</span>
+          </button>
+        </div>
+
+        <!-- Grade Dinâmica dos Participantes -->
         <div id="videoGrid" class="w-full h-full grid gap-4 p-2 transition-all duration-300 grid-cols-1">
           <!-- Os cards de vídeo são injetados dinamicamente aqui -->
         </div>
       </div>
 
-      <!-- Painel Lateral (Gaveta de Chat e Participantes) -->
-      <aside id="sidePanel" class="hidden w-80 bg-[#2d2e30] rounded-2xl border border-white/10 flex-col overflow-hidden shadow-2xl">
+      <!-- Painel Lateral (Gaveta de Chat e Participantes - Responsiva) -->
+      <aside id="sidePanel" class="hidden fixed md:relative inset-y-0 right-0 z-50 md:z-auto w-full sm:w-80 md:w-80 bg-[#2d2e30] md:rounded-2xl border-l md:border border-white/10 flex flex-col overflow-hidden shadow-2xl transition-all">
         <!-- Cabeçalho da Gaveta -->
         <div class="p-4 border-b border-white/10 flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -223,13 +239,13 @@
         </button>
       </div>
 
-      <!-- Direita: Informações, Pessoas e Chat -->
-      <div class="hidden sm:flex items-center justify-end gap-3 w-1/4">
+      <!-- Direita: Informações, Pessoas e Chat (Visível em Mobile e Desktop) -->
+      <div class="flex items-center justify-end gap-2 sm:gap-3 w-auto sm:w-1/4">
         <button id="btnToggleSideChat" class="w-10 h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Chat com todos">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
-          <span id="unreadBadge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-blue-500 rounded-full"></span>
+          <span id="unreadBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-blue-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center shadow-lg">1</span>
         </button>
-        <button id="btnToggleSidePeople" class="w-10 h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition" title="Mostrar participantes">
+        <button id="btnToggleSidePeople" class="w-10 h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Mostrar participantes">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         </button>
       </div>
@@ -292,6 +308,12 @@
     const peopleCount = document.getElementById('peopleCount');
     const unreadBadge = document.getElementById('unreadBadge');
 
+    // Elementos Spotlight (Apresentação de Tela e Fixar)
+    const spotlightArea = document.getElementById('spotlightArea');
+    const spotlightVideo = document.getElementById('spotlightVideo');
+    const spotlightTitle = document.getElementById('spotlightTitle');
+    const btnUnpinSpotlight = document.getElementById('btnUnpinSpotlight');
+
     // Estado da Aplicação
     let localStream = null;
     let localScreenStream = null;
@@ -302,6 +324,46 @@
     let myPeerId = null;
     let myName = 'Douglas';
     let currentRoom = 'sprint-equipe';
+    let pinnedPeerId = null;
+    let activePresentationPeerId = null;
+    let unreadCount = 0;
+
+    // Funções Utilitárias para Segurança e Links
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function linkify(text) {
+      const urlPattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+      return escapeHtml(text).replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline text-blue-400 hover:text-blue-300 break-all">$1</a>');
+    }
+
+    // Gerenciamento de Spotlight (Modo Apresentação / Fixação)
+    function setSpotlight(stream, title, peerId, isPresentation = false) {
+      spotlightVideo.srcObject = stream;
+      spotlightVideo.play().catch(e => console.warn('Spotlight play:', e));
+      spotlightTitle.textContent = title;
+      spotlightArea.classList.remove('hidden');
+
+      if (isPresentation) {
+        activePresentationPeerId = peerId;
+      } else {
+        pinnedPeerId = peerId;
+      }
+      updateGridLayout();
+    }
+
+    function clearSpotlight() {
+      spotlightArea.classList.add('hidden');
+      if (spotlightVideo.srcObject) {
+        spotlightVideo.srcObject = null;
+      }
+      pinnedPeerId = null;
+      activePresentationPeerId = null;
+      updateGridLayout();
+    }
+
+    btnUnpinSpotlight.addEventListener('click', clearSpotlight);
 
     // WebRTC Peers: Map<peerId, { pc: RTCPeerConnection, name: string, stream: MediaStream }>
     const peers = new Map();
@@ -380,6 +442,15 @@
       btnToggleMic.classList.toggle('bg-red-600', isMicMuted);
       btnToggleMic.classList.toggle('hover:bg-red-500', isMicMuted);
       btnToggleMic.classList.toggle('bg-[#3c4043]', !isMicMuted);
+
+      updateMicIndicator('local', isMicMuted);
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'media_state',
+          data: { micMuted: isMicMuted, camOff: isCamOff }
+        }));
+      }
     }
 
     function setCamState(off) {
@@ -397,12 +468,35 @@
       btnToggleCam.classList.toggle('hover:bg-red-500', isCamOff);
       btnToggleCam.classList.toggle('bg-[#3c4043]', !isCamOff);
 
-      // Atualiza card local na sala se já tiver entrado
-      const myCardVideo = document.getElementById('video_local');
-      const myCardAvatar = document.getElementById('avatar_local');
-      if (myCardVideo && myCardAvatar) {
-        myCardVideo.classList.toggle('hidden', isCamOff);
-        myCardAvatar.classList.toggle('hidden', !isCamOff);
+      updateCamIndicator('local', isCamOff);
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'media_state',
+          data: { micMuted: isMicMuted, camOff: isCamOff }
+        }));
+      }
+    }
+
+    function updateMicIndicator(id, isMuted) {
+      const micBadge = document.getElementById(`micMuteBadge_${id}`);
+      const audioDot = document.getElementById(`audioDot_${id}`);
+      if (micBadge) micBadge.classList.toggle('hidden', !isMuted);
+      if (audioDot) {
+        if (isMuted) {
+          audioDot.className = 'w-2 h-2 rounded-full bg-red-500';
+        } else {
+          audioDot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+        }
+      }
+    }
+
+    function updateCamIndicator(id, isOff) {
+      const cardVideo = document.getElementById(`video_${id}`);
+      const cardAvatar = document.getElementById(`avatar_${id}`);
+      if (cardVideo && cardAvatar) {
+        cardVideo.classList.toggle('hidden', isOff);
+        cardAvatar.classList.toggle('hidden', !isOff);
       }
     }
 
@@ -527,6 +621,33 @@
             toggleHandBadge(msg.senderPeerId, msg.data.raised);
           }
 
+          // Apresentação de Tela (Modo Spotlight)
+          else if (msg.type === 'presentation_state') {
+            if (msg.data.isPresenting) {
+              const presenterPeer = peers.get(msg.data.presenterId);
+              const stream = presenterPeer ? presenterPeer.stream : null;
+              showToast(`🖥️ ${msg.data.presenterName} iniciou uma apresentação`);
+              if (stream) {
+                setSpotlight(stream, `Apresentação de ${msg.data.presenterName}`, msg.data.presenterId, true);
+              } else {
+                activePresentationPeerId = msg.data.presenterId;
+              }
+            } else {
+              showToast('Apresentação de tela encerrada');
+              clearSpotlight();
+            }
+          }
+
+          // Estado de Mídia (Microfone/Câmera de outros participantes)
+          else if (msg.type === 'media_state') {
+            if (typeof msg.data.micMuted === 'boolean') {
+              updateMicIndicator(msg.senderPeerId, msg.data.micMuted);
+            }
+            if (typeof msg.data.camOff === 'boolean') {
+              updateCamIndicator(msg.senderPeerId, msg.data.camOff);
+            }
+          }
+
         } catch (err) {
           console.error('[WS] Erro ao processar mensagem do servidor:', err);
         }
@@ -610,6 +731,10 @@
           avatar.classList.add('hidden');
         }
 
+        if (activePresentationPeerId === targetPeerId) {
+          setSpotlight(remoteStream, `Apresentação de ${targetName}`, targetPeerId, true);
+        }
+
         setupAudioMonitoring(remoteStream, targetPeerId);
         updatePeopleList();
       };
@@ -687,6 +812,9 @@
         peer.pc.close();
         peers.delete(peerId);
       }
+      if (pinnedPeerId === peerId || activePresentationPeerId === peerId) {
+        clearSpotlight();
+      }
       const card = document.getElementById(`card_${peerId}`);
       if (card) card.remove();
       updateGridLayout();
@@ -697,7 +825,7 @@
     function createVideoCard(id, name, stream, isLocal) {
       const card = document.createElement('div');
       card.id = `card_${id}`;
-      card.className = 'relative bg-[#3c4043] rounded-2xl overflow-hidden shadow-xl border border-white/5 flex items-center justify-center transition-all duration-300';
+      card.className = 'relative bg-[#3c4043] rounded-2xl overflow-hidden shadow-xl border border-white/5 flex items-center justify-center transition-all duration-300 group';
 
       const video = document.createElement('video');
       video.id = `video_${id}`;
@@ -724,6 +852,28 @@
         video.classList.add('hidden');
       }
 
+      // Controles do Card (Fixar na tela / Status de Microfone Mudo)
+      const topControls = document.createElement('div');
+      topControls.className = 'absolute top-3 left-3 flex items-center gap-1.5 z-10';
+      topControls.innerHTML = `
+        <button id="btnPin_${id}" class="w-7 h-7 rounded-full bg-[#202124]/80 hover:bg-blue-600 text-white flex items-center justify-center text-xs transition shadow border border-white/10 opacity-80 hover:opacity-100" title="Fixar na tela principal">📌</button>
+        <span id="micMuteBadge_${id}" class="hidden w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center text-xs shadow border border-white/10" title="Microfone desligado">🔇</span>
+      `;
+
+      // Evento de Fixar Participante (Pin to Spotlight)
+      const pinBtn = topControls.querySelector(`#btnPin_${id}`);
+      if (pinBtn) {
+        pinBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          const targetStream = isLocal ? localStream : (peers.get(id)?.stream || stream);
+          if (pinnedPeerId === id) {
+            clearSpotlight();
+          } else if (targetStream) {
+            setSpotlight(targetStream, isLocal ? `${name} (Você - Fixado)` : `${name} (Fixado)`, id, false);
+          }
+        });
+      }
+
       // Badge com Nome no Canto Inferior Esquerdo
       const nameBadge = document.createElement('div');
       nameBadge.className = 'absolute bottom-3 left-3 bg-[#202124]/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-2 border border-white/10 shadow z-10';
@@ -740,6 +890,7 @@
 
       card.appendChild(video);
       card.appendChild(avatar);
+      card.appendChild(topControls);
       card.appendChild(nameBadge);
       card.appendChild(handBadge);
       videoGrid.appendChild(card);
@@ -750,22 +901,37 @@
 
     function updateGridLayout() {
       const count = videoGrid.children.length;
-      videoGrid.className = 'w-full h-full grid gap-4 p-2 transition-all duration-300';
+      const isSpotlightActive = spotlightArea && !spotlightArea.classList.contains('hidden');
 
-      if (count === 1) {
-        videoGrid.classList.add('grid-cols-1');
-      } else if (count === 2) {
-        videoGrid.classList.add('grid-cols-1', 'md:grid-cols-2');
-      } else if (count <= 4) {
-        videoGrid.classList.add('grid-cols-2');
-      } else if (count <= 6) {
-        videoGrid.classList.add('grid-cols-2', 'md:grid-cols-3');
+      if (isSpotlightActive) {
+        // Modo Spotlight: os cards ficam em uma faixa responsiva (vertical no desktop, horizontal no mobile)
+        videoGrid.className = 'w-full md:w-64 max-h-36 md:max-h-full flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto p-1 flex-shrink-0';
+        for (const child of videoGrid.children) {
+          child.classList.remove('h-full');
+          child.classList.add('min-w-[140px]', 'md:min-w-0', 'h-28', 'md:h-36', 'flex-shrink-0');
+        }
       } else {
-        videoGrid.classList.add('grid-cols-3', 'md:grid-cols-4');
+        // Modo Grade Normal
+        for (const child of videoGrid.children) {
+          child.classList.remove('min-w-[140px]', 'md:min-w-0', 'h-28', 'md:h-36', 'flex-shrink-0');
+          child.classList.add('h-full');
+        }
+        videoGrid.className = 'w-full h-full grid gap-4 p-2 transition-all duration-300';
+        if (count === 1) {
+          videoGrid.classList.add('grid-cols-1');
+        } else if (count === 2) {
+          videoGrid.classList.add('grid-cols-1', 'md:grid-cols-2');
+        } else if (count <= 4) {
+          videoGrid.classList.add('grid-cols-2');
+        } else if (count <= 6) {
+          videoGrid.classList.add('grid-cols-2', 'md:grid-cols-3');
+        } else {
+          videoGrid.classList.add('grid-cols-3', 'md:grid-cols-4');
+        }
       }
     }
 
-    // 6. Detecção de Voz Ativa (Active Speaker Border) via Web Audio API
+    // 7. Detecção de Voz Ativa (Active Speaker Border) via Web Audio API
     function setupAudioMonitoring(stream, id) {
       try {
         if (!stream || stream.getAudioTracks().length === 0) return;
@@ -791,7 +957,8 @@
             if (audioDot) audioDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
           } else {
             if (card) card.classList.remove('ring-4', 'ring-blue-500');
-            if (audioDot) audioDot.className = 'w-2 h-2 rounded-full bg-gray-500';
+            const isMuted = (id === 'local') ? isMicMuted : false;
+            if (audioDot) audioDot.className = `w-2 h-2 rounded-full ${isMuted ? 'bg-red-500' : 'bg-gray-500'}`;
           }
           requestAnimationFrame(detectSpeech);
         }
@@ -801,30 +968,45 @@
       }
     }
 
-    // 7. Compartilhamento de Tela (Screen Share nativo do navegador)
+    // 8. Compartilhamento de Tela (Screen Share nativo do navegador com modo Spotlight)
     btnScreenShare.addEventListener('click', async () => {
       if (!isScreenSharing) {
         try {
-          localScreenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          localScreenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: { cursor: 'always' },
+            audio: true
+          });
           const screenTrack = localScreenStream.getVideoTracks()[0];
 
-          // Cria card de tela compartilhada
-          createVideoCard('screen_share', `${myName} (Apresentando)`, localScreenStream, false);
+          isScreenSharing = true;
+          btnScreenShare.classList.add('bg-blue-600', 'text-white');
+          btnScreenShare.classList.remove('bg-[#3c4043]');
+
+          // Abre o spotlight com a tela apresentada localmente
+          setSpotlight(localScreenStream, `${myName} (Você está apresentando)`, 'local', true);
+          showToast('🖥️ Você iniciou a apresentação');
 
           // Substitui a faixa nos peers WebRTC existentes
           for (const peer of peers.values()) {
             const sender = peer.pc.getSenders().find(s => s.track && s.track.kind === 'video');
-            if (sender) sender.replaceTrack(screenTrack);
+            if (sender) {
+              sender.replaceTrack(screenTrack);
+            }
           }
 
-          isScreenSharing = true;
-          btnScreenShare.classList.add('bg-blue-600', 'text-white');
+          // Notifica os outros participantes para ativarem o spotlight
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'presentation_state',
+              data: { isPresenting: true, presenterId: myPeerId, presenterName: myName }
+            }));
+          }
 
           screenTrack.onended = () => {
             stopScreenSharing();
           };
         } catch (err) {
-          console.warn('Compartilhamento cancelado pelo usuário.', err);
+          console.warn('Compartilhamento cancelado pelo usuário:', err);
         }
       } else {
         stopScreenSharing();
@@ -832,28 +1014,41 @@
     });
 
     function stopScreenSharing() {
+      if (!isScreenSharing) return;
+      isScreenSharing = false;
+
       if (localScreenStream) {
         localScreenStream.getTracks().forEach(t => t.stop());
         localScreenStream = null;
       }
-      const card = document.getElementById('card_screen_share');
-      if (card) card.remove();
+
+      btnScreenShare.classList.remove('bg-blue-600', 'text-white');
+      btnScreenShare.classList.add('bg-[#3c4043]');
+
+      clearSpotlight();
+      showToast('Apresentação finalizada');
 
       // Restaura a câmera original nos peers
       if (localStream) {
         const camTrack = localStream.getVideoTracks()[0];
         for (const peer of peers.values()) {
           const sender = peer.pc.getSenders().find(s => s.track && s.track.kind === 'video');
-          if (sender && camTrack) sender.replaceTrack(camTrack);
+          if (sender && camTrack) {
+            sender.replaceTrack(camTrack);
+          }
         }
       }
 
-      isScreenSharing = false;
-      btnScreenShare.classList.remove('bg-blue-600');
-      updateGridLayout();
+      // Notifica os outros participantes para desativarem o spotlight
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'presentation_state',
+          data: { isPresenting: false, presenterId: myPeerId }
+        }));
+      }
     }
 
-    // 8. Botão Levantar a Mão (✋)
+    // 9. Botão Levantar a Mão (✋)
     btnRaiseHand.addEventListener('click', () => {
       isHandRaised = !isHandRaised;
       btnRaiseHand.classList.toggle('bg-amber-500', isHandRaised);
@@ -873,7 +1068,7 @@
       if (badge) badge.classList.toggle('hidden', !raised);
     }
 
-    // 9. Reações (Emojis flutuantes)
+    // 10. Reações (Emojis flutuantes)
     btnReactionsMenu.addEventListener('click', () => {
       reactionsPopup.classList.toggle('hidden');
     });
@@ -903,7 +1098,7 @@
       setTimeout(() => bubble.remove(), 2000);
     }
 
-    // 10. Participante Demo (Simulação para teste imediato de grid com 1 usuário só)
+    // 11. Participante Demo (Simulação para teste imediato de grid com 1 usuário só)
     let demoCount = 0;
     btnAddDemoPeer.addEventListener('click', () => {
       demoCount++;
@@ -928,10 +1123,11 @@
       updatePeopleList();
     });
 
-    // 11. Chat e Painel Lateral
+    // 12. Chat e Painel Lateral com Links Clicáveis e Contador de Não Lidas
     btnToggleSideChat.addEventListener('click', () => {
       sidePanel.classList.remove('hidden');
       tabChat.click();
+      unreadCount = 0;
       unreadBadge.classList.add('hidden');
     });
 
@@ -949,6 +1145,8 @@
       tabPeople.className = 'text-sm font-medium text-gray-400 hover:text-white pb-1';
       panelChatContent.classList.remove('hidden');
       panelPeopleContent.classList.add('hidden');
+      unreadCount = 0;
+      unreadBadge.classList.add('hidden');
     });
 
     tabPeople.addEventListener('click', () => {
@@ -981,16 +1179,21 @@
       msgDiv.className = 'flex flex-col gap-0.5';
       msgDiv.innerHTML = `
         <div class="flex items-center gap-2">
-          <span class="font-semibold ${isMe ? 'text-blue-400' : 'text-gray-300'}">${isMe ? 'Você' : sender}</span>
+          <span class="font-semibold ${isMe ? 'text-blue-400' : 'text-gray-300'}">${isMe ? 'Você' : escapeHtml(sender)}</span>
           <span class="text-[10px] text-gray-500">${time}</span>
         </div>
-        <p class="text-gray-200 bg-[#3c4043]/70 px-3 py-2 rounded-xl text-xs leading-relaxed inline-block break-words">${text}</p>
+        <p class="text-gray-200 bg-[#3c4043]/70 px-3 py-2 rounded-xl text-xs leading-relaxed inline-block break-words">${linkify(text)}</p>
       `;
       chatMessages.appendChild(msgDiv);
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
-      if (sidePanel.classList.contains('hidden')) {
-        unreadBadge.classList.remove('hidden');
+      if (sidePanel.classList.contains('hidden') || panelChatContent.classList.contains('hidden')) {
+        if (!isMe) {
+          unreadCount++;
+          unreadBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+          unreadBadge.classList.remove('hidden');
+          showToast(`💬 ${sender}: ${text.length > 25 ? text.substring(0, 25) + '...' : text}`);
+        }
       }
     }
 

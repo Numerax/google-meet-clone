@@ -141,8 +141,8 @@ wss.on('connection', (wsClient, req) => {
         }
       }
 
-      // 4. Reações e Mão Levantada
-      else if (msg.type === 'reaction' || msg.type === 'raise_hand') {
+      // 4. Reações, Mão Levantada, Estado de Mídia (Mic/Cam) e Apresentação de Tela
+      else if (msg.type === 'reaction' || msg.type === 'raise_hand' || msg.type === 'media_state' || msg.type === 'presentation_state') {
         if (currentRoomId && rooms.has(currentRoomId)) {
           const room = rooms.get(currentRoomId);
           for (const peer of room.values()) {
