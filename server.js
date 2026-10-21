@@ -136,8 +136,8 @@ server.on('upgrade', (req, socket, head) => {
 
             // 1. Entrar na Sala
             if (msg.type === 'join') {
-              currentRoomId = msg.roomId || 'geral';
-              userName = msg.name || 'Convidado';
+              currentRoomId = (msg.roomId || 'geral').toLowerCase().trim().replace(/\s+/g, '-');
+              userName = (msg.name || 'Convidado').trim();
 
               if (!rooms.has(currentRoomId)) {
                 rooms.set(currentRoomId, new Map());

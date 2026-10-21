@@ -301,11 +301,27 @@
     const peers = new Map();
     let ws = null;
 
-    // Configuração ICE STUN pública do Google
+    // Configuração ICE STUN e TURN (OpenRelay) para contornar NATs simétricos (4G/5G/Firewalls)
     const rtcConfig = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        }
       ]
     };
 
@@ -387,7 +403,7 @@
     // 2. Entrar na Reunião
     btnJoinMeeting.addEventListener('click', () => {
       myName = inputUserName.value.trim() || 'Participante';
-      currentRoom = inputRoomId.value.trim() || 'geral';
+      currentRoom = (inputRoomId.value.trim() || 'geral').toLowerCase().replace(/\s+/g, '-');
 
       lobbyAvatarCircle.textContent = myName.charAt(0).toUpperCase();
       roomCodeDisplay.textContent = currentRoom;
@@ -473,19 +489,35 @@
       };
     }
 
-    // 4. Fluxo WebRTC RTCPeerConnection (P2P real)
+    // 4. Fluxo WebRTC RTCPeerConnection (P2P real robusto com TURN e fila de ICE)
     async function initiatePeerConnection(targetPeerId, targetName, isInitiator) {
+      if (peers.has(targetPeerId)) {
+        return peers.get(targetPeerId).pc;
+      }
+
+      console.log(`[WebRTC] Criando PeerConnection com ${targetName} (${targetPeerId}), isInitiator: ${isInitiator}`);
       const pc = new RTCPeerConnection(rtcConfig);
-      peers.set(targetPeerId, { pc, name: targetName, stream: null });
+      const peerData = { pc, name: targetName, stream: null, candidateQueue: [] };
+      peers.set(targetPeerId, peerData);
 
       // Adiciona faixas locais (câmera e microfone)
       if (localStream) {
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+        localStream.getTracks().forEach(track => {
+          pc.addTrack(track, localStream);
+        });
       }
 
-      // Envia candidatos ICE para o par
+      pc.oniceconnectionstatechange = () => {
+        console.log(`[WebRTC] ICE State (${targetName}):`, pc.iceConnectionState);
+        const card = document.getElementById(`card_${targetPeerId}`);
+        if (card && pc.iceConnectionState === 'connected') {
+          card.classList.remove('opacity-50');
+        }
+      };
+
+      // Envia candidatos ICE para o par remoto
       pc.onicecandidate = event => {
-        if (event.candidate) {
+        if (event.candidate && ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({
             type: 'signal',
             targetPeerId: targetPeerId,
@@ -496,9 +528,9 @@
 
       // Recebe a stream de vídeo/áudio do par remoto
       pc.ontrack = event => {
-        console.log('Faixa de mídia remota recebida de:', targetName);
-        const remoteStream = event.streams[0];
-        peers.get(targetPeerId).stream = remoteStream;
+        console.log('[WebRTC] Faixa de mídia recebida de:', targetName, event.streams);
+        const remoteStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+        peerData.stream = remoteStream;
 
         let card = document.getElementById(`card_${targetPeerId}`);
         if (!card) {
@@ -506,17 +538,29 @@
           setupAudioMonitoring(remoteStream, targetPeerId);
           updatePeopleList();
         }
+
+        const video = document.getElementById(`video_${targetPeerId}`);
+        if (video) {
+          video.srcObject = remoteStream;
+          video.play().catch(e => console.warn('Erro ao reproduzir vídeo remoto:', e));
+        }
       };
 
       // Se for o iniciador, cria a Oferta SDP
       if (isInitiator) {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        ws.send(JSON.stringify({
-          type: 'signal',
-          targetPeerId: targetPeerId,
-          signalData: { sdp: pc.localDescription }
-        }));
+        try {
+          const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+          await pc.setLocalDescription(offer);
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'signal',
+              targetPeerId: targetPeerId,
+              signalData: { sdp: pc.localDescription }
+            }));
+          }
+        } catch (err) {
+          console.error('[WebRTC] Erro ao criar oferta:', err);
+        }
       }
 
       return pc;
@@ -533,18 +577,39 @@
       const pc = peer.pc;
 
       if (data.sdp) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        if (data.sdp.type === 'offer') {
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          ws.send(JSON.stringify({
-            type: 'signal',
-            targetPeerId: senderPeerId,
-            signalData: { sdp: pc.localDescription }
-          }));
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+          // Descarrega candidatos ICE acumulados na fila antes de ter remoteDescription
+          if (peer.candidateQueue && peer.candidateQueue.length > 0) {
+            console.log(`[WebRTC] Descarregando ${peer.candidateQueue.length} candidatos ICE enfileirados`);
+            while (peer.candidateQueue.length > 0) {
+              const cand = peer.candidateQueue.shift();
+              await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => console.warn(e));
+            }
+          }
+
+          if (data.sdp.type === 'offer') {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({
+                type: 'signal',
+                targetPeerId: senderPeerId,
+                signalData: { sdp: pc.localDescription }
+              }));
+            }
+          }
+        } catch (err) {
+          console.error('[WebRTC] Erro no processamento de SDP:', err);
         }
       } else if (data.candidate) {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.warn(e));
+        if (!pc.remoteDescription) {
+          // Guarda na fila se o SDP remoto ainda não foi aplicado
+          peer.candidateQueue.push(data.candidate);
+        } else {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.warn(e));
+        }
       }
     }
 
@@ -570,7 +635,10 @@
       video.playsInline = true;
       video.className = `w-full h-full object-cover ${isLocal ? 'transform -scale-x-100' : ''}`;
       if (isLocal) video.muted = true;
-      if (stream) video.srcObject = stream;
+      if (stream) {
+        video.srcObject = stream;
+        video.play().catch(e => console.warn('Erro video.play():', e));
+      }
 
       // Avatar se a câmera estiver desligada
       const avatar = document.createElement('div');
