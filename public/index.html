@@ -95,6 +95,12 @@
         </span>
         <span>|</span>
         <span id="roomCodeDisplay" class="font-mono text-gray-300">sprint-equipe</span>
+
+        <!-- Status de Conexão com o Servidor -->
+        <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[11px]">
+          <span id="wsStatusDot" class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          <span id="wsStatusText" class="text-gray-300">Conectando...</span>
+        </div>
       </div>
 
       <div class="flex items-center gap-4">
@@ -421,17 +427,56 @@
       updatePeopleList();
     });
 
-    // 3. Conexão com o Servidor de Sinalização (WebSockets)
+    // 3. Sistema de Notificações Toast
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-14 left-1/2 -translate-x-1/2 bg-[#202124]/95 text-white text-xs px-4 py-2.5 rounded-full shadow-2xl border border-white/10 z-50 transition-all duration-300 transform -translate-y-2 opacity-0 flex items-center gap-2 pointer-events-none';
+      toast.innerHTML = `<span>${msg}</span>`;
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('-translate-y-2', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('-translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // 4. Conexão com o Servidor de Sinalização (WebSockets) com Reconexão e Keepalive
+    let pingInterval = null;
+    let isConnecting = false;
+
     function connectSignaling() {
+      if (isConnecting || (ws && ws.readyState === WebSocket.OPEN)) return;
+      isConnecting = true;
+
+      const wsStatusDot = document.getElementById('wsStatusDot');
+      const wsStatusText = document.getElementById('wsStatusText');
+      if (wsStatusDot) wsStatusDot.className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
+      if (wsStatusText) wsStatusText.textContent = 'Conectando...';
+
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
       ws = new WebSocket(`${protocol}//${location.host}/signaling`);
 
       ws.onopen = () => {
+        isConnecting = false;
+        console.log('[WS] Conectado com sucesso ao servidor de sinalização');
+        if (wsStatusDot) wsStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        if (wsStatusText) wsStatusText.textContent = 'Conectado';
+
         ws.send(JSON.stringify({
           type: 'join',
           roomId: currentRoom,
           name: myName
         }));
+
+        // Heartbeat a cada 10s para manter proxies (Render/Cloudflare) e mobile acordados
+        clearInterval(pingInterval);
+        pingInterval = setInterval(() => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 10000);
       };
 
       ws.onmessage = async e => {
@@ -441,9 +486,8 @@
           // Entrada na sala confirmada
           if (msg.type === 'room_joined') {
             myPeerId = msg.peerId;
-            console.log('Entrei na sala com ID:', myPeerId);
+            console.log('[Meet] Sala confirmada. Meu Peer ID:', myPeerId, 'Membros existentes:', msg.peers);
 
-            // Inicia conexão WebRTC com cada usuário que já estava na sala
             for (const peer of msg.peers) {
               await initiatePeerConnection(peer.peerId, peer.name, true);
             }
@@ -452,8 +496,9 @@
 
           // Novo membro entrou na sala
           else if (msg.type === 'peer_joined') {
-            console.log('Novo participante:', msg.name, msg.peerId);
-            // Aguarda a oferta dele
+            console.log('[Meet] Novo participante detectado:', msg.name, msg.peerId);
+            showToast(`👋 ${msg.name} entrou na reunião`);
+            await initiatePeerConnection(msg.peerId, msg.name, false);
             updatePeopleList();
           }
 
@@ -465,7 +510,6 @@
           // Membro saiu da sala
           else if (msg.type === 'peer_left') {
             removePeer(msg.peerId);
-            updatePeopleList();
           }
 
           // Chat recebido
@@ -484,18 +528,40 @@
           }
 
         } catch (err) {
-          console.error('Erro ao processar mensagem do servidor:', err);
+          console.error('[WS] Erro ao processar mensagem do servidor:', err);
         }
+      };
+
+      ws.onclose = () => {
+        isConnecting = false;
+        clearInterval(pingInterval);
+        console.warn('[WS] Conexão fechada. Tentando reconectar...');
+        if (wsStatusDot) wsStatusDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
+        if (wsStatusText) wsStatusText.textContent = 'Reconectando...';
+
+        if (!meetingRoom.classList.contains('hidden')) {
+          setTimeout(connectSignaling, 2000);
+        }
+      };
+
+      ws.onerror = err => {
+        console.warn('[WS Error]:', err);
       };
     }
 
-    // 4. Fluxo WebRTC RTCPeerConnection (P2P real robusto com TURN e fila de ICE)
+    // 5. Fluxo WebRTC RTCPeerConnection (P2P real robusto com TURN e fila de ICE)
     async function initiatePeerConnection(targetPeerId, targetName, isInitiator) {
+      // 1. Cria o card visual IMEDIATAMENTE para a tela dividir em 50/50 na hora!
+      let card = document.getElementById(`card_${targetPeerId}`);
+      if (!card) {
+        card = createVideoCard(targetPeerId, targetName, null, false);
+      }
+
       if (peers.has(targetPeerId)) {
         return peers.get(targetPeerId).pc;
       }
 
-      console.log(`[WebRTC] Criando PeerConnection com ${targetName} (${targetPeerId}), isInitiator: ${isInitiator}`);
+      console.log(`[WebRTC] Criando conexão com ${targetName} (${targetPeerId}), isInitiator: ${isInitiator}`);
       const pc = new RTCPeerConnection(rtcConfig);
       const peerData = { pc, name: targetName, stream: null, candidateQueue: [] };
       peers.set(targetPeerId, peerData);
@@ -509,9 +575,9 @@
 
       pc.oniceconnectionstatechange = () => {
         console.log(`[WebRTC] ICE State (${targetName}):`, pc.iceConnectionState);
-        const card = document.getElementById(`card_${targetPeerId}`);
-        if (card && pc.iceConnectionState === 'connected') {
-          card.classList.remove('opacity-50');
+        const cardElem = document.getElementById(`card_${targetPeerId}`);
+        if (cardElem && pc.iceConnectionState === 'connected') {
+          cardElem.classList.remove('opacity-60');
         }
       };
 
@@ -532,18 +598,20 @@
         const remoteStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
         peerData.stream = remoteStream;
 
-        let card = document.getElementById(`card_${targetPeerId}`);
-        if (!card) {
-          createVideoCard(targetPeerId, targetName, remoteStream, false);
-          setupAudioMonitoring(remoteStream, targetPeerId);
-          updatePeopleList();
-        }
-
         const video = document.getElementById(`video_${targetPeerId}`);
+        const avatar = document.getElementById(`avatar_${targetPeerId}`);
+
         if (video) {
           video.srcObject = remoteStream;
-          video.play().catch(e => console.warn('Erro ao reproduzir vídeo remoto:', e));
+          video.classList.remove('hidden');
+          video.play().catch(e => console.warn('Erro video.play():', e));
         }
+        if (avatar) {
+          avatar.classList.add('hidden');
+        }
+
+        setupAudioMonitoring(remoteStream, targetPeerId);
+        updatePeopleList();
       };
 
       // Se for o iniciador, cria a Oferta SDP
@@ -605,7 +673,6 @@
         }
       } else if (data.candidate) {
         if (!pc.remoteDescription) {
-          // Guarda na fila se o SDP remoto ainda não foi aplicado
           peer.candidateQueue.push(data.candidate);
         } else {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.warn(e));
@@ -614,16 +681,19 @@
     }
 
     function removePeer(peerId) {
-      if (peers.has(peerId)) {
-        peers.get(peerId).pc.close();
+      const peer = peers.get(peerId);
+      if (peer) {
+        showToast(`🏃 ${peer.name} saiu da reunião`);
+        peer.pc.close();
         peers.delete(peerId);
       }
       const card = document.getElementById(`card_${peerId}`);
       if (card) card.remove();
       updateGridLayout();
+      updatePeopleList();
     }
 
-    // 5. Interface da Grade Dinâmica de Vídeos (CSS Grid Inteligente)
+    // 6. Interface da Grade Dinâmica de Vídeos (CSS Grid Inteligente)
     function createVideoCard(id, name, stream, isLocal) {
       const card = document.createElement('div');
       card.id = `card_${id}`;
@@ -635,29 +705,37 @@
       video.playsInline = true;
       video.className = `w-full h-full object-cover ${isLocal ? 'transform -scale-x-100' : ''}`;
       if (isLocal) video.muted = true;
+
+      // Avatar se a câmera estiver desligada ou aguardando stream P2P
+      const avatar = document.createElement('div');
+      avatar.id = `avatar_${id}`;
+      avatar.className = `absolute inset-0 bg-[#3c4043] flex flex-col items-center justify-center gap-3 ${stream ? 'hidden' : ''}`;
+      avatar.innerHTML = `
+        <div class="w-20 h-20 rounded-full bg-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg">
+          ${name.charAt(0).toUpperCase()}
+        </div>
+        ${!isLocal && !stream ? '<span class="text-xs text-gray-400 animate-pulse flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>Conectando vídeo...</span>' : ''}
+      `;
+
       if (stream) {
         video.srcObject = stream;
         video.play().catch(e => console.warn('Erro video.play():', e));
+      } else if (!isLocal) {
+        video.classList.add('hidden');
       }
-
-      // Avatar se a câmera estiver desligada
-      const avatar = document.createElement('div');
-      avatar.id = `avatar_${id}`;
-      avatar.className = 'hidden absolute inset-0 bg-[#3c4043] flex items-center justify-center';
-      avatar.innerHTML = `<div class="w-20 h-20 rounded-full bg-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg">${name.charAt(0).toUpperCase()}</div>`;
 
       // Badge com Nome no Canto Inferior Esquerdo
       const nameBadge = document.createElement('div');
-      nameBadge.className = 'absolute bottom-3 left-3 bg-[#202124]/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-2 border border-white/10 shadow';
+      nameBadge.className = 'absolute bottom-3 left-3 bg-[#202124]/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-2 border border-white/10 shadow z-10';
       nameBadge.innerHTML = `
         <span class="truncate max-w-[140px]">${isLocal ? name + ' (Você)' : name}</span>
-        <span id="audioDot_${id}" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span id="audioDot_${id}" class="w-2 h-2 rounded-full ${isLocal ? 'bg-emerald-500' : 'bg-gray-500'}"></span>
       `;
 
       // Badge de Mão Levantada
       const handBadge = document.createElement('div');
       handBadge.id = `handBadge_${id}`;
-      handBadge.className = 'hidden absolute top-3 right-3 bg-amber-500 text-slate-950 px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 animate-bounce';
+      handBadge.className = 'hidden absolute top-3 right-3 bg-amber-500 text-slate-950 px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 animate-bounce z-10';
       handBadge.innerHTML = `<span>✋</span> Levantou a mão`;
 
       card.appendChild(video);
@@ -667,6 +745,7 @@
       videoGrid.appendChild(card);
 
       updateGridLayout();
+      return card;
     }
 
     function updateGridLayout() {

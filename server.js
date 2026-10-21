@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
+const { WebSocketServer, WebSocket } = require('ws');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -40,219 +40,173 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// Parser nativo RFC 6455 para WebSockets (zero dependências npm)
-function parseWsFrame(buffer) {
-  if (buffer.length < 2) return null;
-  const firstByte = buffer[0];
-  const secondByte = buffer[1];
-  const opcode = firstByte & 0x0f;
-  const isMasked = (secondByte & 0x80) !== 0;
-  let payloadLength = secondByte & 0x7f;
-  let offset = 2;
+// WebSocket Server oficial com suporte a Heartbeat/Ping-Pong automático
+const wss = new WebSocketServer({ server, path: '/signaling' });
 
-  if (payloadLength === 126) {
-    if (buffer.length < 4) return null;
-    payloadLength = buffer.readUInt16BE(2);
-    offset = 4;
-  } else if (payloadLength === 127) {
-    if (buffer.length < 10) return null;
-    payloadLength = Number(buffer.readBigUInt64BE(2));
-    offset = 10;
-  }
-
-  if (isMasked) {
-    if (buffer.length < offset + 4 + payloadLength) return null;
-    const mask = buffer.slice(offset, offset + 4);
-    offset += 4;
-    const payload = Buffer.allocUnsafe(payloadLength);
-    for (let i = 0; i < payloadLength; i++) {
-      payload[i] = buffer[offset + i] ^ mask[i % 4];
-    }
-    return { opcode, payload, totalLength: offset + payloadLength };
-  } else {
-    if (buffer.length < offset + payloadLength) return null;
-    const payload = buffer.slice(offset, offset + payloadLength);
-    return { opcode, payload, totalLength: offset + payloadLength };
-  }
-}
-
-function sendWs(socket, data) {
-  try {
-    const payload = Buffer.from(typeof data === 'string' ? data : JSON.stringify(data), 'utf8');
-    const len = payload.length;
-    let header;
-
-    if (len < 126) {
-      header = Buffer.from([0x81, len]);
-    } else if (len <= 65535) {
-      header = Buffer.alloc(4);
-      header[0] = 0x81;
-      header[1] = 126;
-      header.writeUInt16BE(len, 2);
-    } else {
-      header = Buffer.alloc(10);
-      header[0] = 0x81;
-      header[1] = 127;
-      header.writeBigUInt64BE(BigInt(len), 2);
-    }
-    socket.write(Buffer.concat([header, payload]));
-  } catch (e) {
-    // Socket fechado
-  }
-}
-
-// Salas de Reunião em Memória (Signaling WebRTC)
-// rooms: { [roomId]: Map<peerId, { socket, name }> }
+// Salas de Reunião em Memória: Map<roomId, Map<peerId, { ws, name }>>
 const rooms = new Map();
 
-server.on('upgrade', (req, socket, head) => {
-  if (req.url.startsWith('/signaling')) {
-    const key = req.headers['sec-websocket-key'];
-    const accept = crypto.createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
+function sendWs(wsClient, data) {
+  if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+    try {
+      wsClient.send(typeof data === 'string' ? data : JSON.stringify(data));
+    } catch (e) {
+      console.warn('Erro ao enviar frame WS:', e.message);
+    }
+  }
+}
 
-    socket.write(
-      'HTTP/1.1 101 Switching Protocols\r\n' +
-      'Upgrade: websocket\r\n' +
-      'Connection: Upgrade\r\n' +
-      `Sec-WebSocket-Accept: ${accept}\r\n\r\n`
-    );
+wss.on('connection', (wsClient, req) => {
+  const peerId = 'peer_' + Math.random().toString(36).substring(2, 9);
+  let currentRoomId = null;
+  let userName = 'Participante';
 
-    const peerId = 'peer_' + Math.random().toString(36).substring(2, 9);
-    let currentRoomId = null;
-    let userName = 'Participante';
-    let accumulatedBuffer = Buffer.alloc(0);
+  // Heartbeat do socket para compatibilidade com Render / Envoy
+  wsClient.isAlive = true;
+  wsClient.on('pong', () => {
+    wsClient.isAlive = true;
+  });
 
-    socket.on('data', chunk => {
-      accumulatedBuffer = Buffer.concat([accumulatedBuffer, chunk]);
+  wsClient.on('message', rawMsg => {
+    try {
+      const msg = JSON.parse(rawMsg.toString());
 
-      while (accumulatedBuffer.length > 0) {
-        const frame = parseWsFrame(accumulatedBuffer);
-        if (!frame) break;
-        accumulatedBuffer = accumulatedBuffer.slice(frame.totalLength);
+      // 1. Entrar na Sala
+      if (msg.type === 'join') {
+        currentRoomId = (msg.roomId || 'geral').toLowerCase().trim().replace(/\s+/g, '-');
+        userName = (msg.name || 'Convidado').trim();
 
-        if (frame.opcode === 1) { // Text frame (JSON)
-          try {
-            const msg = JSON.parse(frame.payload.toString('utf8'));
-
-            // 1. Entrar na Sala
-            if (msg.type === 'join') {
-              currentRoomId = (msg.roomId || 'geral').toLowerCase().trim().replace(/\s+/g, '-');
-              userName = (msg.name || 'Convidado').trim();
-
-              if (!rooms.has(currentRoomId)) {
-                rooms.set(currentRoomId, new Map());
-              }
-
-              const room = rooms.get(currentRoomId);
-
-              // Informa o novo usuário sobre os membros que já estão na sala
-              const existingPeers = [];
-              for (const [id, peer] of room.entries()) {
-                existingPeers.push({ peerId: id, name: peer.name });
-              }
-
-              sendWs(socket, {
-                type: 'room_joined',
-                peerId: peerId,
-                roomId: currentRoomId,
-                peers: existingPeers
-              });
-
-              // Notifica quem já estava na sala sobre o novo participante
-              for (const [id, peer] of room.entries()) {
-                sendWs(peer.socket, {
-                  type: 'peer_joined',
-                  peerId: peerId,
-                  name: userName
-                });
-              }
-
-              // Adiciona à sala
-              room.set(peerId, { socket, name: userName });
-              console.log(`[Meet] ${userName} (${peerId}) entrou na sala: ${currentRoomId}`);
-            }
-
-            // 2. Troca de Sinalização WebRTC (SDP Offer / Answer e ICE Candidates)
-            else if (msg.type === 'signal') {
-              if (currentRoomId && rooms.has(currentRoomId)) {
-                const targetPeer = rooms.get(currentRoomId).get(msg.targetPeerId);
-                if (targetPeer) {
-                  sendWs(targetPeer.socket, {
-                    type: 'signal',
-                    senderPeerId: peerId,
-                    name: userName,
-                    signalData: msg.signalData
-                  });
-                }
-              }
-            }
-
-            // 3. Chat de Mensagens
-            else if (msg.type === 'chat') {
-              if (currentRoomId && rooms.has(currentRoomId)) {
-                const room = rooms.get(currentRoomId);
-                const chatMsg = {
-                  type: 'chat',
-                  senderPeerId: peerId,
-                  senderName: userName,
-                  text: msg.text,
-                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                };
-                for (const peer of room.values()) {
-                  sendWs(peer.socket, chatMsg);
-                }
-              }
-            }
-
-            // 4. Reações (Emojis) e Levantar a Mão
-            else if (msg.type === 'reaction' || msg.type === 'raise_hand') {
-              if (currentRoomId && rooms.has(currentRoomId)) {
-                const room = rooms.get(currentRoomId);
-                for (const peer of room.values()) {
-                  sendWs(peer.socket, {
-                    type: msg.type,
-                    senderPeerId: peerId,
-                    senderName: userName,
-                    data: msg.data
-                  });
-                }
-              }
-            }
-
-          } catch (e) {
-            console.error('Erro ao processar mensagem WS:', e);
-          }
-        } else if (frame.opcode === 8) { // Close
-          socket.end();
+        if (!rooms.has(currentRoomId)) {
+          rooms.set(currentRoomId, new Map());
         }
-      }
-    });
 
-    socket.on('close', () => {
-      if (currentRoomId && rooms.has(currentRoomId)) {
         const room = rooms.get(currentRoomId);
-        room.delete(peerId);
-        console.log(`[Meet] ${userName} (${peerId}) saiu da sala: ${currentRoomId}`);
 
-        // Notifica os outros membros que o participante saiu
-        for (const peer of room.values()) {
-          sendWs(peer.socket, {
-            type: 'peer_left',
-            peerId: peerId
+        // Informa os membros existentes para o novo participante
+        const existingPeers = [];
+        for (const [id, peer] of room.entries()) {
+          existingPeers.push({ peerId: id, name: peer.name });
+        }
+
+        sendWs(wsClient, {
+          type: 'room_joined',
+          peerId: peerId,
+          roomId: currentRoomId,
+          peers: existingPeers
+        });
+
+        // Notifica quem já estava na sala sobre o novo participante
+        for (const [id, peer] of room.entries()) {
+          sendWs(peer.ws, {
+            type: 'peer_joined',
+            peerId: peerId,
+            name: userName
           });
         }
 
-        if (room.size === 0) {
-          rooms.delete(currentRoomId);
+        // Adiciona à sala
+        room.set(peerId, { ws: wsClient, name: userName });
+        console.log(`[Meet] ${userName} (${peerId}) entrou na sala: ${currentRoomId}. Total na sala: ${room.size}`);
+      }
+
+      // 2. Troca de Sinalização WebRTC (SDP Offer / Answer e ICE Candidates)
+      else if (msg.type === 'signal') {
+        if (currentRoomId && rooms.has(currentRoomId)) {
+          const targetPeer = rooms.get(currentRoomId).get(msg.targetPeerId);
+          if (targetPeer) {
+            sendWs(targetPeer.ws, {
+              type: 'signal',
+              senderPeerId: peerId,
+              name: userName,
+              signalData: msg.signalData
+            });
+          }
         }
       }
-    });
-  } else {
-    socket.destroy();
-  }
+
+      // 3. Chat
+      else if (msg.type === 'chat') {
+        if (currentRoomId && rooms.has(currentRoomId)) {
+          const room = rooms.get(currentRoomId);
+          const chatMsg = {
+            type: 'chat',
+            senderPeerId: peerId,
+            senderName: userName,
+            text: msg.text,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+          for (const peer of room.values()) {
+            sendWs(peer.ws, chatMsg);
+          }
+        }
+      }
+
+      // 4. Reações e Mão Levantada
+      else if (msg.type === 'reaction' || msg.type === 'raise_hand') {
+        if (currentRoomId && rooms.has(currentRoomId)) {
+          const room = rooms.get(currentRoomId);
+          for (const peer of room.values()) {
+            sendWs(peer.ws, {
+              type: msg.type,
+              senderPeerId: peerId,
+              senderName: userName,
+              data: msg.data
+            });
+          }
+        }
+      }
+
+      // 5. Ping do cliente para manter conexão viva no mobile
+      else if (msg.type === 'ping') {
+        sendWs(wsClient, { type: 'pong' });
+      }
+
+    } catch (err) {
+      console.error('Erro ao processar mensagem WS:', err);
+    }
+  });
+
+  wsClient.on('close', () => {
+    if (currentRoomId && rooms.has(currentRoomId)) {
+      const room = rooms.get(currentRoomId);
+      room.delete(peerId);
+      console.log(`[Meet] ${userName} (${peerId}) saiu da sala: ${currentRoomId}. Restantes: ${room.size}`);
+
+      for (const peer of room.values()) {
+        sendWs(peer.ws, {
+          type: 'peer_left',
+          peerId: peerId,
+          name: userName
+        });
+      }
+
+      if (room.size === 0) {
+        rooms.delete(currentRoomId);
+      }
+    }
+  });
+
+  wsClient.on('error', err => {
+    console.warn(`[WS Error ${peerId}]:`, err.message);
+  });
 });
 
-server.listen(PORT, () => {
+// Intervalo de Ping para manter conexões ativas através do proxy do Render
+const pingInterval = setInterval(() => {
+  wss.clients.forEach(wsClient => {
+    if (wsClient.isAlive === false) {
+      return wsClient.terminate();
+    }
+    wsClient.isAlive = false;
+    wsClient.ping();
+  });
+}, 25000);
+
+wss.on('close', () => {
+  clearInterval(pingInterval);
+});
+
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`=======================================================`);
   console.log(`Google Meet Clone Server rodando na porta ${PORT}`);
   console.log(`Acesse no navegador: http://localhost:${PORT}`);
