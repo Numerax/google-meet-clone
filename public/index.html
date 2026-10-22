@@ -75,6 +75,11 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </button>
 
+        <button id="btnLobbySettings" class="w-full bg-[#3c4043]/70 hover:bg-[#3c4043] border border-white/10 text-gray-200 font-medium py-2.5 rounded-full text-xs transition flex items-center justify-center gap-2">
+          <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Configurações (Pasta de Gravação / HD)</span>
+        </button>
+
         <p class="text-[11px] text-gray-500 text-center">
           Dica: Você pode abrir esta mesma página em outra aba para testar a chamada entre duas pessoas!
         </p>
@@ -252,8 +257,8 @@
         </button>
       </div>
 
-      <!-- Direita: Informações, Pessoas e Chat (Visível em Mobile e Desktop) -->
-      <div class="flex items-center justify-end gap-1.5 sm:gap-3 w-auto sm:w-1/4">
+      <!-- Direita: Informações, Pessoas, Chat e Configurações (Visível em Mobile e Desktop) -->
+      <div class="flex items-center justify-end gap-1.5 sm:gap-2.5 w-auto sm:w-1/4">
         <button id="btnToggleSideChat" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Chat com todos">
           <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
           <span id="unreadBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-blue-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center shadow-lg">1</span>
@@ -261,9 +266,115 @@
         <button id="btnToggleSidePeople" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Mostrar participantes">
           <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         </button>
+        <button id="btnOpenSettings" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Configurações (Pasta de Gravação / HD)">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span id="settingsFolderIndicator" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400"></span>
+        </button>
       </div>
 
     </footer>
+  </div>
+
+  <!-- ================= MODAL DE CONFIGURAÇÕES (ESTILO GOOGLE MEET) ================= -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#2d2e30] border border-white/10 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <!-- Cabeçalho do Modal -->
+      <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <h2 class="text-base font-semibold text-white">Configurações do Google Meet</h2>
+        </div>
+        <button id="btnCloseSettings" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition text-lg">✕</button>
+      </div>
+
+      <!-- Corpo com Abas Laterais -->
+      <div class="flex flex-col sm:flex-row flex-1 overflow-hidden">
+        
+        <!-- Menu Lateral de Categorias -->
+        <div class="w-full sm:w-52 bg-[#252628] border-b sm:border-b-0 sm:border-r border-white/10 p-3 flex sm:flex-col gap-1.5 overflow-x-auto">
+          <button class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 font-medium text-xs text-left whitespace-nowrap">
+            <span>💾</span>
+            <span>Gravação & Disco</span>
+          </button>
+          <button disabled class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-500 text-xs text-left whitespace-nowrap cursor-not-allowed" title="Em breve na Etapa 2">
+            <span>✨</span>
+            <span>Efeitos & Fundos (Etapa 2)</span>
+          </button>
+          <button disabled class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-500 text-xs text-left whitespace-nowrap cursor-not-allowed" title="Em breve na Etapa 3">
+            <span>🔴</span>
+            <span>YouTube Live (Etapa 3)</span>
+          </button>
+        </div>
+
+        <!-- Conteúdo da Aba: Gravação & Armazenamento Local -->
+        <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-5 text-xs">
+          
+          <div>
+            <h3 class="text-sm font-semibold text-white mb-1">Pasta Local de Gravação (HD / SSD)</h3>
+            <p class="text-gray-400 leading-relaxed">
+              Escolha em qual pasta ou HD externo do seu Mac as gravações da reunião serão salvas automaticamente ao finalizar.
+            </p>
+          </div>
+
+          <!-- Card da Pasta Atual -->
+          <div class="bg-[#202124] border border-white/10 rounded-xl p-4 flex flex-col gap-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-gray-400 font-medium">Destino atual:</span>
+              <span id="folderStatusBadge" class="px-2 py-0.5 rounded-full bg-gray-700 text-gray-300 text-[10px] font-medium">Padrão do Navegador</span>
+            </div>
+
+            <div class="flex items-center gap-2.5 bg-[#2d2e30] px-3.5 py-2.5 rounded-lg border border-white/5">
+              <span class="text-lg">📂</span>
+              <span id="currentRecordingFolderLabel" class="font-mono text-gray-200 truncate flex-1">Pasta "Downloads" padrão do sistema</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <button id="btnChooseRecordingFolder" class="bg-[#1a73e8] hover:bg-[#1557b0] text-white font-medium px-4 py-2 rounded-lg transition shadow flex items-center gap-2">
+                <span>📁 Escolher Pasta / HD no Finder...</span>
+              </button>
+              <button id="btnResetRecordingFolder" class="hidden bg-[#3c4043] hover:bg-[#474a4d] text-gray-200 px-3 py-2 rounded-lg transition">
+                Restaurar padrão
+              </button>
+            </div>
+            <p id="folderApiSupportNote" class="text-[11px] text-gray-400 leading-normal"></p>
+          </div>
+
+          <!-- Opção de Perguntar a cada Gravação -->
+          <label class="flex items-start gap-3 bg-[#202124]/60 border border-white/5 p-3.5 rounded-xl cursor-pointer hover:bg-[#202124] transition">
+            <input id="chkAlwaysAskSavePath" type="checkbox" class="mt-0.5 w-4 h-4 accent-blue-500 rounded">
+            <div class="flex flex-col gap-0.5">
+              <span class="font-medium text-gray-200">Abrir janela "Salvar como..." ao encerrar cada gravação</span>
+              <span class="text-[11px] text-gray-400">Permite escolher uma pasta ou HD diferente toda vez que você parar uma gravação.</span>
+            </div>
+          </label>
+
+          <!-- Prefixo e Qualidade -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-t border-white/10">
+            <div>
+              <label class="block text-gray-300 font-medium mb-1.5">Prefixo do arquivo:</label>
+              <input id="inputRecordingPrefix" type="text" value="reuniao" placeholder="Ex: reuniao, mentoria" class="w-full bg-[#202124] border border-white/10 rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-gray-300 font-medium mb-1.5">Qualidade do vídeo:</label>
+              <select id="selectRecordingQuality" class="w-full bg-[#202124] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                <option value="720p">HD 720p (3.5 Mbps - Recomendado)</option>
+                <option value="1080p">Full HD 1080p (6.0 Mbps - Alta Definição)</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Rodapé do Modal -->
+      <div class="px-6 py-3.5 bg-[#252628] border-t border-white/10 flex items-center justify-end gap-3">
+        <button id="btnSaveAndCloseSettings" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-2 rounded-full transition shadow">
+          Concluído
+        </button>
+      </div>
+
+    </div>
   </div>
 
 
@@ -1553,13 +1664,259 @@
       ctx.fillText(`Google Meet • ${currentRoom}`, W - 22, H - 10);
     }
 
+    // =========================================================================
+    // 14. GERENCIADOR DE CONFIGURAÇÕES & PASTA LOCAL DE GRAVAÇÃO (FILE SYSTEM API + INDEXEDDB)
+    // =========================================================================
+    const settingsModal = document.getElementById('settingsModal');
+    const btnOpenSettings = document.getElementById('btnOpenSettings');
+    const btnLobbySettings = document.getElementById('btnLobbySettings');
+    const btnCloseSettings = document.getElementById('btnCloseSettings');
+    const btnSaveAndCloseSettings = document.getElementById('btnSaveAndCloseSettings');
+    const btnChooseRecordingFolder = document.getElementById('btnChooseRecordingFolder');
+    const btnResetRecordingFolder = document.getElementById('btnResetRecordingFolder');
+    const currentRecordingFolderLabel = document.getElementById('currentRecordingFolderLabel');
+    const folderStatusBadge = document.getElementById('folderStatusBadge');
+    const folderApiSupportNote = document.getElementById('folderApiSupportNote');
+    const settingsFolderIndicator = document.getElementById('settingsFolderIndicator');
+    const chkAlwaysAskSavePath = document.getElementById('chkAlwaysAskSavePath');
+    const inputRecordingPrefix = document.getElementById('inputRecordingPrefix');
+    const selectRecordingQuality = document.getElementById('selectRecordingQuality');
+
+    let recordingDirHandle = null;
+
+    // Persistência do FileSystemDirectoryHandle no IndexedDB do navegador
+    function openSettingsDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('google_meet_clone_settings', 1);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('handles')) {
+            db.createObjectStore('handles');
+          }
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = e => reject(e.target.error);
+      });
+    }
+
+    async function saveDirHandleToDB(handle) {
+      try {
+        const db = await openSettingsDB();
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').put(handle, 'recording_dir');
+      } catch (e) {
+        console.warn('[Settings] Falha ao salvar pasta no IndexedDB:', e);
+      }
+    }
+
+    async function loadDirHandleFromDB() {
+      try {
+        const db = await openSettingsDB();
+        return new Promise(resolve => {
+          const tx = db.transaction('handles', 'readonly');
+          const req = tx.objectStore('handles').get('recording_dir');
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function clearDirHandleFromDB() {
+      try {
+        const db = await openSettingsDB();
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').delete('recording_dir');
+      } catch (e) {}
+    }
+
+    function updateFolderSettingsUI() {
+      if (recordingDirHandle) {
+        currentRecordingFolderLabel.textContent = `Pasta selecionada: "${recordingDirHandle.name}"`;
+        folderStatusBadge.textContent = '✓ Pasta / HD Vinculado';
+        folderStatusBadge.className = 'px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold';
+        btnResetRecordingFolder.classList.remove('hidden');
+        if (settingsFolderIndicator) settingsFolderIndicator.classList.remove('hidden');
+      } else {
+        currentRecordingFolderLabel.textContent = 'Pasta "Downloads" padrão do sistema';
+        folderStatusBadge.textContent = 'Padrão do Navegador';
+        folderStatusBadge.className = 'px-2 py-0.5 rounded-full bg-gray-700 text-gray-300 text-[10px] font-medium';
+        btnResetRecordingFolder.classList.add('hidden');
+        if (settingsFolderIndicator) settingsFolderIndicator.classList.add('hidden');
+      }
+
+      if (!('showDirectoryPicker' in window)) {
+        folderApiSupportNote.innerHTML = '💡 <b>Dica:</b> Seu navegador atual (ex: Safari) usa o gerenciador nativo de Downloads. Para vincular uma pasta fixa em qualquer HD externo diretamente, use o Google Chrome, Brave ou Edge no Mac.';
+      } else {
+        folderApiSupportNote.textContent = 'Você pode escolher qualquer pasta local ou HD/SSD externo conectado ao seu Mac.';
+      }
+    }
+
+    async function initSettings() {
+      // Carrega preferências salvas no localStorage
+      const savedPrefix = localStorage.getItem('meet_rec_prefix');
+      if (savedPrefix && inputRecordingPrefix) inputRecordingPrefix.value = savedPrefix;
+
+      const savedQuality = localStorage.getItem('meet_rec_quality');
+      if (savedQuality && selectRecordingQuality) selectRecordingQuality.value = savedQuality;
+
+      const savedAsk = localStorage.getItem('meet_rec_always_ask');
+      if (savedAsk !== null && chkAlwaysAskSavePath) {
+        chkAlwaysAskSavePath.checked = savedAsk === 'true';
+      }
+
+      // Carrega pasta vinculada do IndexedDB
+      const savedHandle = await loadDirHandleFromDB();
+      if (savedHandle) {
+        recordingDirHandle = savedHandle;
+      }
+      updateFolderSettingsUI();
+    }
+
+    function openSettingsModal() {
+      updateFolderSettingsUI();
+      settingsModal.classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      if (inputRecordingPrefix) {
+        const cleanPrefix = (inputRecordingPrefix.value.trim() || 'reuniao').replace(/[^a-zA-Z0-9_-]/g, '-');
+        inputRecordingPrefix.value = cleanPrefix;
+        localStorage.setItem('meet_rec_prefix', cleanPrefix);
+      }
+      if (selectRecordingQuality) {
+        localStorage.setItem('meet_rec_quality', selectRecordingQuality.value);
+      }
+      if (chkAlwaysAskSavePath) {
+        localStorage.setItem('meet_rec_always_ask', String(chkAlwaysAskSavePath.checked));
+      }
+      settingsModal.classList.add('hidden');
+    }
+
+    if (btnOpenSettings) btnOpenSettings.addEventListener('click', openSettingsModal);
+    if (btnLobbySettings) btnLobbySettings.addEventListener('click', openSettingsModal);
+    if (btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettingsModal);
+    if (btnSaveAndCloseSettings) btnSaveAndCloseSettings.addEventListener('click', closeSettingsModal);
+
+    // Fechar modal clicando fora
+    if (settingsModal) {
+      settingsModal.addEventListener('click', e => {
+        if (e.target === settingsModal) closeSettingsModal();
+      });
+    }
+
+    if (btnChooseRecordingFolder) {
+      btnChooseRecordingFolder.addEventListener('click', async () => {
+        if ('showDirectoryPicker' in window) {
+          try {
+            const handle = await window.showDirectoryPicker({
+              mode: 'readwrite',
+              startIn: 'videos'
+            });
+            if (handle) {
+              recordingDirHandle = handle;
+              await saveDirHandleToDB(handle);
+              updateFolderSettingsUI();
+              showToast(`📂 Pasta "${handle.name}" configurada para salvar gravações!`);
+            }
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.warn('[Settings] Erro ao selecionar pasta:', err);
+              showToast('⚠️ Não foi possível selecionar a pasta.');
+            }
+          }
+        } else {
+          // Navegadores sem showDirectoryPicker (ex: Safari): ativa o modo Salvar Como / Downloads do Finder
+          chkAlwaysAskSavePath.checked = true;
+          localStorage.setItem('meet_rec_always_ask', 'true');
+          showToast('💡 No Safari, ative "Perguntar onde salvar" nas preferências do Safari ou use o Chrome para vincular pastas de HD.');
+        }
+      });
+    }
+
+    if (btnResetRecordingFolder) {
+      btnResetRecordingFolder.addEventListener('click', async () => {
+        recordingDirHandle = null;
+        await clearDirHandleFromDB();
+        updateFolderSettingsUI();
+        showToast('Pasta de gravação restaurada para o padrão (Downloads).');
+      });
+    }
+
+    async function saveRecordingBlobToDisk(blob, filename, mimeType) {
+      const alwaysAsk = chkAlwaysAskSavePath && chkAlwaysAskSavePath.checked;
+
+      // 1. Se o usuário marcou "Sempre abrir janela Salvar Como..." e o navegador suporta showSaveFilePicker
+      if (alwaysAsk && 'showSaveFilePicker' in window) {
+        try {
+          const fileHandle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{
+              description: 'Vídeo da Reunião',
+              accept: { [mimeType.split(';')[0] || 'video/webm']: [filename.endsWith('.mp4') ? '.mp4' : '.webm'] }
+            }]
+          });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          showToast(`💾 Gravação salva com sucesso em: ${fileHandle.name}`);
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            showToast('⚠️ Salvamento cancelado pelo usuário.');
+            return;
+          }
+          console.warn('[Recorder] Fallback após erro no showSaveFilePicker:', err);
+        }
+      }
+
+      // 2. Se há uma Pasta / HD vinculado nas Configurações (recordingDirHandle)
+      if (recordingDirHandle) {
+        try {
+          let perm = await recordingDirHandle.queryPermission({ mode: 'readwrite' });
+          if (perm !== 'granted') {
+            perm = await recordingDirHandle.requestPermission({ mode: 'readwrite' });
+          }
+          if (perm === 'granted') {
+            const fileHandle = await recordingDirHandle.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            showToast(`💾 Salvo direto na pasta "${recordingDirHandle.name}": ${filename}`);
+            return;
+          }
+        } catch (err) {
+          console.warn('[Recorder] Não foi possível gravar direto na pasta vinculada, usando download padrão:', err);
+        }
+      }
+
+      // 3. Fallback universal: Download padrão do navegador
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 2000);
+      showToast(`💾 Gravação salva em Downloads: ${filename}`);
+    }
+
     function startCompositorStream() {
+      const quality = (selectRecordingQuality && selectRecordingQuality.value) || localStorage.getItem('meet_rec_quality') || '720p';
+      const targetW = quality === '1080p' ? 1920 : 1280;
+      const targetH = quality === '1080p' ? 1080 : 720;
+
       if (!compositorCanvas) {
         compositorCanvas = document.createElement('canvas');
-        compositorCanvas.width = 1280;
-        compositorCanvas.height = 720;
         compositorCtx = compositorCanvas.getContext('2d');
       }
+      compositorCanvas.width = targetW;
+      compositorCanvas.height = targetH;
 
       // Renderiza em 30 FPS constantes via setInterval (não congela se trocar de aba/janela no Mac)
       clearInterval(compositorInterval);
@@ -1634,12 +1991,25 @@
       return '';
     }
 
-    function startMeetingRecording() {
+    async function startMeetingRecording() {
       if (isRecording) return;
       try {
+        // Se houver pasta vinculada, garante a permissão de escrita no momento do clique do usuário
+        if (recordingDirHandle && 'queryPermission' in recordingDirHandle) {
+          try {
+            const perm = await recordingDirHandle.queryPermission({ mode: 'readwrite' });
+            if (perm !== 'granted') {
+              await recordingDirHandle.requestPermission({ mode: 'readwrite' });
+            }
+          } catch (e) {}
+        }
+
+        const quality = (selectRecordingQuality && selectRecordingQuality.value) || localStorage.getItem('meet_rec_quality') || '720p';
+        const bitrate = quality === '1080p' ? 6000000 : 3500000;
+
         const composedStream = startCompositorStream();
         const mimeType = getSupportedRecorderMimeType();
-        const options = mimeType ? { mimeType, videoBitsPerSecond: 3500000 } : { videoBitsPerSecond: 3500000 };
+        const options = mimeType ? { mimeType, videoBitsPerSecond: bitrate } : { videoBitsPerSecond: bitrate };
 
         recordedChunks = [];
         mediaRecorder = new MediaRecorder(composedStream, options);
@@ -1650,29 +2020,18 @@
           }
         };
 
-        mediaRecorder.onstop = () => {
+        mediaRecorder.onstop = async () => {
           stopCompositorStream();
           const finalMime = mediaRecorder.mimeType || 'video/webm';
           const ext = finalMime.includes('mp4') ? 'mp4' : 'webm';
           const blob = new Blob(recordedChunks, { type: finalMime });
-          const url = URL.createObjectURL(blob);
 
+          const prefix = (inputRecordingPrefix && inputRecordingPrefix.value.trim()) || localStorage.getItem('meet_rec_prefix') || 'reuniao';
           const now = new Date();
           const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}h${String(now.getMinutes()).padStart(2, '0')}`;
-          const filename = `reuniao-${currentRoom}-${stamp}.${ext}`;
+          const filename = `${prefix}-${currentRoom}-${stamp}.${ext}`;
 
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }, 2000);
-
-          showToast(`💾 Gravação salva em disco: ${filename}`);
+          await saveRecordingBlobToDisk(blob, filename, finalMime);
         };
 
         mediaRecorder.start(1000); // Coleta blocos de 1s com segurança
@@ -1698,7 +2057,8 @@
           }
         }, 1000);
 
-        showToast('🔴 Gravação iniciada! Capturando vídeo e áudio da reunião...');
+        const destInfo = recordingDirHandle ? `na pasta "${recordingDirHandle.name}"` : 'em disco';
+        showToast(`🔴 Gravação iniciada (${quality})! Salvamento configurado ${destInfo}.`);
 
         // Avisa os demais participantes na sala
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -1755,10 +2115,13 @@
       if (localStream) localStream.getTracks().forEach(t => t.stop());
       if (localScreenStream) localScreenStream.getTracks().forEach(t => t.stop());
       if (ws) ws.close();
-      setTimeout(() => window.location.reload(), 300);
+      setTimeout(() => window.location.reload(), 400);
     });
 
-    window.addEventListener('DOMContentLoaded', initLobby);
+    window.addEventListener('DOMContentLoaded', () => {
+      initLobby();
+      initSettings();
+    });
   </script>
 </body>
 </html>
