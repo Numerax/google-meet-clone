@@ -13,11 +13,16 @@ use std::{
     collections::HashMap,
     net::SocketAddr,
     path::Path,
+    process::Stdio,
     sync::Arc,
 };
-use tokio::sync::{mpsc, RwLock};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+    process::{Child, ChildStdin, Command},
+    sync::{mpsc, RwLock},
+};
 use tower_http::services::ServeDir;
-use tracing::info;
+use tracing::{info, warn};
 
 type Tx = mpsc::UnboundedSender<Message>;
 
@@ -50,6 +55,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/signaling", get(ws_handler))
+        .route("/rtmp-stream", get(rtmp_ws_handler))
         .fallback_service(static_service)
         .with_state(rooms);
 
@@ -78,6 +84,10 @@ async fn ws_handler(
     State(rooms): State<Rooms>,
 ) -> impl IntoResponse {
     ws.on_upgrade(move |socket| handle_socket(socket, rooms))
+}
+
+async fn rtmp_ws_handler(ws: WebSocketUpgrade) -> impl IntoResponse {
+    ws.on_upgrade(handle_rtmp_socket)
 }
 
 async fn handle_socket(socket: WebSocket, rooms: Rooms) {
@@ -252,6 +262,191 @@ async fn handle_socket(socket: WebSocket, rooms: Rooms) {
             }
         }
     }
+}
+
+// =========================================================================
+// PONTE RTMP PARA YOUTUBE LIVE (WebSocket Binary Stream -> FFmpeg -> RTMP)
+// =========================================================================
+async fn handle_rtmp_socket(socket: WebSocket) {
+    let (mut ws_sender, mut ws_receiver) = socket.split();
+    let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
+
+    let send_task = tokio::spawn(async move {
+        while let Some(msg) = rx.recv().await {
+            if ws_sender.send(msg).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    let mut ffmpeg_child: Option<Child> = None;
+    let mut ffmpeg_stdin: Option<ChildStdin> = None;
+
+    while let Some(Ok(msg)) = ws_receiver.next().await {
+        match msg {
+            Message::Text(text) => {
+                if let Ok(val) = serde_json::from_str::<Value>(&text) {
+                    let msg_type = val.get("type").and_then(|v| v.as_str()).unwrap_or("");
+
+                    if msg_type == "start_rtmp" {
+                        // Encerra instância anterior caso exista
+                        drop(ffmpeg_stdin.take());
+                        if let Some(mut old_child) = ffmpeg_child.take() {
+                            let _ = old_child.kill().await;
+                        }
+
+                        let rtmp_base = val
+                            .get("rtmpUrl")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("rtmp://a.rtmp.youtube.com/live2")
+                            .trim()
+                            .trim_end_matches('/');
+
+                        let stream_key = val
+                            .get("streamKey")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("")
+                            .trim();
+
+                        let quality = val
+                            .get("quality")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("720p");
+
+                        if stream_key.is_empty() || (!rtmp_base.starts_with("rtmp://") && !rtmp_base.starts_with("rtmps://")) {
+                            let _ = tx.send(Message::Text(
+                                json!({
+                                    "type": "rtmp_error",
+                                    "message": "URL RTMP ou Chave de Transmissão (Stream Key) inválida."
+                                })
+                                .to_string(),
+                            ));
+                            continue;
+                        }
+
+                        let full_rtmp_url = format!("{}/{}", rtmp_base, stream_key);
+                        let (v_bitrate, v_maxrate, v_bufsize) = if quality == "1080p" {
+                            ("4500k", "4800k", "9000k")
+                        } else {
+                            ("2800k", "3200k", "6000k")
+                        };
+
+                        info!("[YouTube Live] Iniciando FFmpeg RTMP ({}) para {}", quality, rtmp_base);
+
+                        let spawn_res = Command::new("ffmpeg")
+                            .args([
+                                "-loglevel", "warning",
+                                "-fflags", "+genpts",
+                                "-i", "pipe:0",
+                                "-c:v", "libx264",
+                                "-preset", "veryfast",
+                                "-tune", "zerolatency",
+                                "-pix_fmt", "yuv420p",
+                                "-r", "30",
+                                "-g", "60",
+                                "-b:v", v_bitrate,
+                                "-maxrate", v_maxrate,
+                                "-bufsize", v_bufsize,
+                                "-c:a", "aac",
+                                "-b:a", "128k",
+                                "-ar", "44100",
+                                "-ac", "2",
+                                "-f", "flv",
+                                &full_rtmp_url,
+                            ])
+                            .stdin(Stdio::piped())
+                            .stdout(Stdio::null())
+                            .stderr(Stdio::piped())
+                            .kill_on_drop(true)
+                            .spawn();
+
+                        match spawn_res {
+                            Ok(mut child) => {
+                                ffmpeg_stdin = child.stdin.take();
+                                if let Some(stderr) = child.stderr.take() {
+                                    let tx_err = tx.clone();
+                                    tokio::spawn(async move {
+                                        let mut reader = BufReader::new(stderr).lines();
+                                        while let Ok(Some(line)) = reader.next_line().await {
+                                            warn!("[FFmpeg RTMP]: {}", line);
+                                            if line.contains("Connection refused")
+                                                || line.contains("Input/output error")
+                                                || line.contains("Server error")
+                                                || line.contains("Failed to update header")
+                                            {
+                                                let _ = tx_err.send(Message::Text(
+                                                    json!({
+                                                        "type": "rtmp_log",
+                                                        "message": line
+                                                    })
+                                                    .to_string(),
+                                                ));
+                                            }
+                                        }
+                                    });
+                                }
+                                ffmpeg_child = Some(child);
+
+                                let _ = tx.send(Message::Text(
+                                    json!({
+                                        "type": "rtmp_started",
+                                        "message": "Ponte FFmpeg RTMP iniciada com sucesso!"
+                                    })
+                                    .to_string(),
+                                ));
+                            }
+                            Err(e) => {
+                                warn!("[YouTube Live] Falha ao iniciar FFmpeg: {}", e);
+                                let _ = tx.send(Message::Text(
+                                    json!({
+                                        "type": "rtmp_error",
+                                        "message": format!("FFmpeg não encontrado ou falhou no servidor ({}). No Render com Docker ele já vem instalado automaticamente.", e)
+                                    })
+                                    .to_string(),
+                                ));
+                            }
+                        }
+                    } else if msg_type == "stop_rtmp" {
+                        info!("[YouTube Live] Encerrando transmissão RTMP a pedido do usuário.");
+                        break;
+                    } else if msg_type == "ping" {
+                        let _ = tx.send(Message::Text(json!({ "type": "pong" }).to_string()));
+                    }
+                }
+            }
+            Message::Binary(bytes) => {
+                if let Some(stdin) = ffmpeg_stdin.as_mut() {
+                    if let Err(e) = stdin.write_all(&bytes).await {
+                        warn!("[YouTube Live] Pipe FFmpeg fechado durante escrita: {}", e);
+                        let _ = tx.send(Message::Text(
+                            json!({
+                                "type": "rtmp_error",
+                                "message": "A conexão RTMP com o servidor do YouTube foi interrompida (verifique sua Chave de Transmissão)."
+                            })
+                            .to_string(),
+                        ));
+                        break;
+                    }
+                }
+            }
+            Message::Ping(payload) => {
+                let _ = tx.send(Message::Pong(payload));
+            }
+            Message::Close(_) => {
+                break;
+            }
+            _ => {}
+        }
+    }
+
+    // Limpeza segura do processo FFmpeg ao fechar o socket
+    drop(ffmpeg_stdin.take());
+    if let Some(mut child) = ffmpeg_child.take() {
+        let _ = child.kill().await;
+        let _ = child.wait().await;
+        info!("[YouTube Live] Processo FFmpeg finalizado com segurança.");
+    }
+    send_task.abort();
 }
 
 // Gerador simples de identificador sem dependência pesada de random

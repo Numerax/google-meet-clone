@@ -116,6 +116,10 @@
           <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
           <span id="recordingStatusText">REC 00:00</span>
         </div>
+        <div id="liveStreamBadge" class="hidden flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-bold shadow-md">
+          <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+          <span id="liveStreamStatusText">AO VIVO • 00:00</span>
+        </div>
       </div>
 
       <div class="flex items-center gap-4">
@@ -256,6 +260,11 @@
           </span>
         </button>
 
+        <!-- Transmitir Ao Vivo no YouTube (RTMP) -->
+        <button id="btnLiveStream" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md relative" title="Transmitir ao vivo no YouTube (Live RTMP)">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" id="liveBtnIcon" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+        </button>
+
         <!-- Adicionar Participante Demo (Simulação rápida para teste individual) -->
         <button id="btnAddDemoPeer" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md text-xs sm:text-base font-bold" title="Simular entrada de participante">+👤</button>
 
@@ -275,7 +284,7 @@
         <button id="btnToggleSidePeople" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Mostrar participantes">
           <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         </button>
-        <button id="btnOpenSettings" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Configurações (Pasta de Gravação / HD)">
+        <button id="btnOpenSettings" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Configurações (Pasta de Gravação / HD / YouTube Live)">
           <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           <span id="settingsFolderIndicator" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400"></span>
         </button>
@@ -292,7 +301,7 @@
       <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          <h2 class="text-base font-semibold text-white">Configurações & Estúdio Visual</h2>
+          <h2 class="text-base font-semibold text-white">Configurações, Estúdio & YouTube Live</h2>
         </div>
         <button id="btnCloseSettings" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition text-lg">✕</button>
       </div>
@@ -310,9 +319,9 @@
             <span>✨</span>
             <span>Efeitos & Fundos</span>
           </button>
-          <button disabled class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-500 text-xs text-left whitespace-nowrap cursor-not-allowed" title="Em breve na Etapa 3">
+          <button id="tabSettingsYoutube" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 font-medium text-xs text-left whitespace-nowrap transition">
             <span>🔴</span>
-            <span>YouTube Live (Etapa 3)</span>
+            <span>YouTube Live</span>
           </button>
         </div>
 
@@ -470,6 +479,67 @@
                 <input id="sliderContrast" type="range" min="60" max="150" value="100" class="w-full accent-blue-500">
               </div>
             </div>
+          </div>
+
+        </div>
+
+        <!-- ABA 3: Transmissão Ao Vivo no YouTube (RTMP) -->
+        <div id="panelSettingsYoutube" class="hidden flex-1 p-6 overflow-y-auto flex flex-col gap-5 text-xs">
+          
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="text-sm font-semibold text-white mb-1 flex items-center gap-2">
+                <span>🔴 Transmissão Ao Vivo para o YouTube (RTMP)</span>
+                <span id="ytModalStatusBadge" class="px-2 py-0.5 rounded-full bg-gray-700 text-gray-300 text-[10px] font-medium">Offline</span>
+              </h3>
+              <p class="text-gray-400 leading-relaxed">
+                Transmita a reunião inteira (todos os participantes, áudio mixado, efeitos visuais e compartilhamento de tela) diretamente para o seu canal do YouTube sem precisar de OBS Studio.
+              </p>
+            </div>
+            <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" class="bg-[#202124] hover:bg-[#35373a] text-rose-400 border border-rose-500/30 px-3 py-2 rounded-xl font-medium whitespace-nowrap transition flex items-center gap-1.5">
+              <span>↗ Abrir YouTube Studio</span>
+            </a>
+          </div>
+
+          <div class="bg-[#202124] border border-white/10 rounded-xl p-4 flex flex-col gap-4">
+            
+            <div>
+              <label class="block text-gray-300 font-medium mb-1.5">URL do Servidor RTMP (YouTube / Twitch / Custom):</label>
+              <input id="inputYoutubeRtmpUrl" type="text" value="rtmp://a.rtmp.youtube.com/live2" placeholder="rtmp://a.rtmp.youtube.com/live2" class="w-full bg-[#2d2e30] border border-white/10 rounded-lg px-3.5 py-2 text-white font-mono focus:outline-none focus:border-rose-500">
+            </div>
+
+            <div>
+              <label class="block text-gray-300 font-medium mb-1.5">Chave de Transmissão do YouTube (Stream Key):</label>
+              <div class="flex items-center gap-2">
+                <input id="inputYoutubeStreamKey" type="password" placeholder="xxxx-xxxx-xxxx-xxxx-xxxx" class="flex-1 bg-[#2d2e30] border border-white/10 rounded-lg px-3.5 py-2 text-white font-mono focus:outline-none focus:border-rose-500">
+                <button id="btnToggleShowStreamKey" type="button" class="bg-[#3c4043] hover:bg-[#474a4d] text-gray-200 px-3 py-2 rounded-lg transition font-medium">
+                  👁️ Mostrar
+                </button>
+              </div>
+              <p class="text-[11px] text-gray-400 mt-1.5">
+                Copie sua "Chave de transmissão" no painel <b>Transmitir ao vivo</b> do YouTube Studio e cole acima. Ela fica salva com segurança apenas no seu navegador.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/10">
+              <div>
+                <label class="block text-gray-300 font-medium mb-1.5">Resolução da Live:</label>
+                <select id="selectYoutubeQuality" class="w-full bg-[#2d2e30] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-rose-500">
+                  <option value="720p">HD 720p @ 30fps (Recomendado - Estável)</option>
+                  <option value="1080p">Full HD 1080p @ 30fps (Alta Taxa)</option>
+                </select>
+              </div>
+              <div class="flex flex-col justify-end">
+                <button id="btnModalToggleLive" type="button" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                  <span>🔴 Iniciar Transmissão no YouTube</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3.5 text-[11px] text-blue-200 leading-relaxed">
+            💡 <b>Como funciona:</b> Ao clicar em iniciar, o compositor da sala envia o vídeo e áudio mixados em tempo real para o nosso servidor Rust, que codifica em H.264/AAC via <b>FFmpeg</b> e entrega ao servidor RTMP do YouTube. Você também pode gravar em disco e transmitir ao vivo simultaneamente!
           </div>
 
         </div>
@@ -919,6 +989,24 @@
               } else {
                 showToast(`⏹️ ${msg.data.recorderName || msg.senderName} encerrou a gravação`);
                 if (!isRecording && badge) badge.classList.add('hidden');
+              }
+            }
+          }
+
+          // Estado de Transmissão Ao Vivo no YouTube (Notificação para todos na sala)
+          else if (msg.type === 'live_state') {
+            if (msg.senderPeerId !== myPeerId && msg.data) {
+              const lBadge = document.getElementById('liveStreamBadge');
+              const lTxt = document.getElementById('liveStreamStatusText');
+              if (msg.data.isLive) {
+                showToast(`📺 ${msg.data.streamerName || msg.senderName} iniciou transmissão AO VIVO no YouTube!`);
+                if (lBadge) lBadge.classList.remove('hidden');
+                if (lTxt) lTxt.textContent = `AO VIVO • YouTube (${msg.data.streamerName || msg.senderName})`;
+              } else {
+                showToast(`⏹️ ${msg.data.streamerName || msg.senderName} encerrou a transmissão no YouTube`);
+                if (typeof isLiveStreaming !== 'undefined' && !isLiveStreaming && lBadge) {
+                  lBadge.classList.add('hidden');
+                }
               }
             }
           }
@@ -1891,25 +1979,27 @@
 
     const tabSettingsStorage = document.getElementById('tabSettingsStorage');
     const tabSettingsEffects = document.getElementById('tabSettingsEffects');
+    const tabSettingsYoutube = document.getElementById('tabSettingsYoutube');
     const panelSettingsStorage = document.getElementById('panelSettingsStorage');
     const panelSettingsEffects = document.getElementById('panelSettingsEffects');
+    const panelSettingsYoutube = document.getElementById('panelSettingsYoutube');
     const settingsPreviewVideo = document.getElementById('settingsPreviewVideo');
 
     function switchSettingsTab(tabName) {
+      const isStorage = tabName === 'storage';
       const isEffects = tabName === 'effects';
-      if (panelSettingsStorage) panelSettingsStorage.classList.toggle('hidden', isEffects);
-      if (panelSettingsEffects) panelSettingsEffects.classList.toggle('hidden', !isEffects);
+      const isYoutube = tabName === 'youtube';
 
-      if (tabSettingsStorage) {
-        tabSettingsStorage.className = isEffects
-          ? 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 font-medium text-xs text-left whitespace-nowrap transition'
-          : 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 font-medium text-xs text-left whitespace-nowrap transition';
-      }
-      if (tabSettingsEffects) {
-        tabSettingsEffects.className = isEffects
-          ? 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 font-medium text-xs text-left whitespace-nowrap transition'
-          : 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 font-medium text-xs text-left whitespace-nowrap transition';
-      }
+      if (panelSettingsStorage) panelSettingsStorage.classList.toggle('hidden', !isStorage);
+      if (panelSettingsEffects) panelSettingsEffects.classList.toggle('hidden', !isEffects);
+      if (panelSettingsYoutube) panelSettingsYoutube.classList.toggle('hidden', !isYoutube);
+
+      const activeCls = 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 font-medium text-xs text-left whitespace-nowrap transition';
+      const inactiveCls = 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 font-medium text-xs text-left whitespace-nowrap transition';
+
+      if (tabSettingsStorage) tabSettingsStorage.className = isStorage ? activeCls : inactiveCls;
+      if (tabSettingsEffects) tabSettingsEffects.className = isEffects ? activeCls : inactiveCls;
+      if (tabSettingsYoutube) tabSettingsYoutube.className = isYoutube ? activeCls : inactiveCls;
 
       if (isEffects && settingsPreviewVideo && localStream) {
         if (settingsPreviewVideo.srcObject !== localStream) {
@@ -1921,6 +2011,7 @@
 
     if (tabSettingsStorage) tabSettingsStorage.addEventListener('click', () => switchSettingsTab('storage'));
     if (tabSettingsEffects) tabSettingsEffects.addEventListener('click', () => switchSettingsTab('effects'));
+    if (tabSettingsYoutube) tabSettingsYoutube.addEventListener('click', () => switchSettingsTab('youtube'));
 
     function openSettingsModal(initialTab = 'storage') {
       updateFolderSettingsUI();
@@ -1940,6 +2031,9 @@
       }
       if (chkAlwaysAskSavePath) {
         localStorage.setItem('meet_rec_always_ask', String(chkAlwaysAskSavePath.checked));
+      }
+      if (typeof saveYoutubeSettingsToStorage === 'function') {
+        saveYoutubeSettingsToStorage();
       }
       settingsModal.classList.add('hidden');
     }
@@ -2056,8 +2150,17 @@
       showToast(`💾 Gravação salva em Downloads: ${filename}`);
     }
 
-    function startCompositorStream() {
-      const quality = (selectRecordingQuality && selectRecordingQuality.value) || localStorage.getItem('meet_rec_quality') || '720p';
+    function startCompositorStream(requestedQuality) {
+      // Se o compositor já estiver rodando (ex: gravando em disco e iniciando YouTube Live simultaneamente), reaproveita!
+      if (compositorInterval && compositorCanvas && compositorAudioDest) {
+        const canvasVideoStream = compositorCanvas.captureStream(30);
+        return new MediaStream([
+          ...canvasVideoStream.getVideoTracks(),
+          ...compositorAudioDest.stream.getAudioTracks()
+        ]);
+      }
+
+      const quality = requestedQuality || (selectRecordingQuality && selectRecordingQuality.value) || localStorage.getItem('meet_rec_quality') || '720p';
       const targetW = quality === '1080p' ? 1920 : 1280;
       const targetH = quality === '1080p' ? 1080 : 720;
 
@@ -2110,6 +2213,10 @@
     }
 
     function stopCompositorStream() {
+      // Só desliga o compositor se nem a gravação em disco nem a Live do YouTube estiverem ativas
+      if (isRecording || (typeof isLiveStreaming !== 'undefined' && isLiveStreaming)) {
+        return;
+      }
       clearInterval(compositorInterval);
       compositorInterval = null;
       connectedAudioSources.clear();
@@ -2812,9 +2919,258 @@
       });
     }
 
+    // =========================================================================
+    // 16. TRANSMISSÃO AO VIVO PARA O YOUTUBE (RTMP VIA WEBSOCKET + FFMPEG)
+    // =========================================================================
+    const btnLiveStream = document.getElementById('btnLiveStream');
+    const liveBtnIcon = document.getElementById('liveBtnIcon');
+    const liveStreamBadge = document.getElementById('liveStreamBadge');
+    const liveStreamStatusText = document.getElementById('liveStreamStatusText');
+    const ytModalStatusBadge = document.getElementById('ytModalStatusBadge');
+    const inputYoutubeRtmpUrl = document.getElementById('inputYoutubeRtmpUrl');
+    const inputYoutubeStreamKey = document.getElementById('inputYoutubeStreamKey');
+    const btnToggleShowStreamKey = document.getElementById('btnToggleShowStreamKey');
+    const selectYoutubeQuality = document.getElementById('selectYoutubeQuality');
+    const btnModalToggleLive = document.getElementById('btnModalToggleLive');
+
+    let isLiveStreaming = false;
+    let rtmpWs = null;
+    let liveMediaRecorder = null;
+    let liveTimerInterval = null;
+    let liveSeconds = 0;
+
+    function initYoutubeSettings() {
+      const savedUrl = localStorage.getItem('meet_yt_rtmp_url');
+      if (savedUrl && inputYoutubeRtmpUrl) inputYoutubeRtmpUrl.value = savedUrl;
+
+      const savedKey = localStorage.getItem('meet_yt_stream_key');
+      if (savedKey && inputYoutubeStreamKey) inputYoutubeStreamKey.value = savedKey;
+
+      const savedQual = localStorage.getItem('meet_yt_quality');
+      if (savedQual && selectYoutubeQuality) selectYoutubeQuality.value = savedQual;
+    }
+
+    function saveYoutubeSettingsToStorage() {
+      if (inputYoutubeRtmpUrl) {
+        localStorage.setItem('meet_yt_rtmp_url', inputYoutubeRtmpUrl.value.trim() || 'rtmp://a.rtmp.youtube.com/live2');
+      }
+      if (inputYoutubeStreamKey) {
+        localStorage.setItem('meet_yt_stream_key', inputYoutubeStreamKey.value.trim());
+      }
+      if (selectYoutubeQuality) {
+        localStorage.setItem('meet_yt_quality', selectYoutubeQuality.value);
+      }
+    }
+
+    if (btnToggleShowStreamKey && inputYoutubeStreamKey) {
+      btnToggleShowStreamKey.addEventListener('click', () => {
+        const isPwd = inputYoutubeStreamKey.type === 'password';
+        inputYoutubeStreamKey.type = isPwd ? 'text' : 'password';
+        btnToggleShowStreamKey.textContent = isPwd ? '🙈 Ocultar' : '👁️ Mostrar';
+      });
+    }
+
+    function updateYoutubeLiveUI(active) {
+      if (btnLiveStream) {
+        btnLiveStream.classList.toggle('bg-rose-600', active);
+        btnLiveStream.classList.toggle('hover:bg-rose-500', active);
+        btnLiveStream.classList.toggle('ring-2', active);
+        btnLiveStream.classList.toggle('ring-rose-400', active);
+        btnLiveStream.classList.toggle('bg-[#3c4043]', !active);
+        btnLiveStream.classList.toggle('hover:bg-[#474a4d]', !active);
+        btnLiveStream.title = active ? 'Encerrar transmissão ao vivo no YouTube' : 'Transmitir ao vivo no YouTube (Live RTMP)';
+      }
+      if (liveBtnIcon) {
+        liveBtnIcon.classList.toggle('text-white', active);
+        liveBtnIcon.classList.toggle('text-rose-500', !active);
+      }
+      if (liveStreamBadge) {
+        liveStreamBadge.classList.toggle('hidden', !active);
+      }
+      if (ytModalStatusBadge) {
+        ytModalStatusBadge.textContent = active ? '🔴 AO VIVO NO YOUTUBE' : 'Offline';
+        ytModalStatusBadge.className = active
+          ? 'px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold animate-pulse'
+          : 'px-2 py-0.5 rounded-full bg-gray-700 text-gray-300 text-[10px] font-medium';
+      }
+      if (btnModalToggleLive) {
+        btnModalToggleLive.innerHTML = active
+          ? '<span>⏹️ Encerrar Transmissão Ao Vivo</span>'
+          : '<span>🔴 Iniciar Transmissão no YouTube</span>';
+        btnModalToggleLive.className = active
+          ? 'w-full bg-gray-700 hover:bg-red-600 text-white font-semibold py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2'
+          : 'w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2';
+      }
+    }
+
+    async function startYoutubeLiveStream() {
+      if (isLiveStreaming) return;
+      saveYoutubeSettingsToStorage();
+
+      const rtmpUrl = (inputYoutubeRtmpUrl && inputYoutubeRtmpUrl.value.trim()) || localStorage.getItem('meet_yt_rtmp_url') || 'rtmp://a.rtmp.youtube.com/live2';
+      const streamKey = (inputYoutubeStreamKey && inputYoutubeStreamKey.value.trim()) || localStorage.getItem('meet_yt_stream_key') || '';
+      const quality = (selectYoutubeQuality && selectYoutubeQuality.value) || localStorage.getItem('meet_yt_quality') || '720p';
+
+      if (!streamKey) {
+        openSettingsModal('youtube');
+        if (inputYoutubeStreamKey) setTimeout(() => inputYoutubeStreamKey.focus(), 150);
+        showToast('🔑 Cole sua Chave de Transmissão (Stream Key) do YouTube para entrar ao vivo!');
+        return;
+      }
+
+      try {
+        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        rtmpWs = new WebSocket(`${protocol}//${location.host}/rtmp-stream`);
+        rtmpWs.binaryType = 'arraybuffer';
+
+        showToast('⏳ Conectando ao servidor RTMP do YouTube...');
+
+        rtmpWs.onopen = () => {
+          rtmpWs.send(JSON.stringify({
+            type: 'start_rtmp',
+            rtmpUrl,
+            streamKey,
+            quality
+          }));
+        };
+
+        rtmpWs.onmessage = ev => {
+          try {
+            const msg = JSON.parse(ev.data);
+            if (msg.type === 'rtmp_started') {
+              beginLiveMediaRecorderPump(quality);
+            } else if (msg.type === 'rtmp_error') {
+              showToast(`⚠️ Erro na Live: ${msg.message}`);
+              stopYoutubeLiveStream();
+            } else if (msg.type === 'rtmp_log') {
+              console.warn('[YouTube RTMP Log]:', msg.message);
+            }
+          } catch (e) {}
+        };
+
+        rtmpWs.onerror = () => {
+          showToast('⚠️ Falha na conexão com o endpoint de transmissão RTMP.');
+          stopYoutubeLiveStream();
+        };
+
+        rtmpWs.onclose = () => {
+          if (isLiveStreaming) {
+            stopYoutubeLiveStream();
+          }
+        };
+      } catch (err) {
+        console.error('[YouTube Live] Erro ao iniciar:', err);
+        showToast('⚠️ Não foi possível iniciar a transmissão ao vivo.');
+      }
+    }
+
+    function beginLiveMediaRecorderPump(quality) {
+      if (isLiveStreaming) return;
+      try {
+        const composedStream = startCompositorStream(quality);
+        const mimeType = getSupportedRecorderMimeType();
+        const bitrate = quality === '1080p' ? 4500000 : 2800000;
+        const options = mimeType ? { mimeType, videoBitsPerSecond: bitrate } : { videoBitsPerSecond: bitrate };
+
+        liveMediaRecorder = new MediaRecorder(composedStream, options);
+
+        liveMediaRecorder.ondataavailable = async e => {
+          if (e.data && e.data.size > 0 && rtmpWs && rtmpWs.readyState === WebSocket.OPEN) {
+            try {
+              const buf = await e.data.arrayBuffer();
+              rtmpWs.send(buf);
+            } catch (err) {}
+          }
+        };
+
+        liveMediaRecorder.start(250); // Envia pacotes contínuos de 250ms de baixa latência para o FFmpeg
+        isLiveStreaming = true;
+        liveSeconds = 0;
+
+        updateYoutubeLiveUI(true);
+        if (liveStreamStatusText) liveStreamStatusText.textContent = 'AO VIVO • 00:00';
+
+        clearInterval(liveTimerInterval);
+        liveTimerInterval = setInterval(() => {
+          liveSeconds++;
+          if (liveStreamStatusText) {
+            liveStreamStatusText.textContent = `AO VIVO • ${formatRecordingTime(liveSeconds)}`;
+          }
+        }, 1000);
+
+        showToast(`📺 Você está AO VIVO no YouTube (${quality})!`);
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'live_state',
+            data: { isLive: true, streamerName: myName }
+          }));
+        }
+      } catch (err) {
+        console.error('[YouTube Live] Erro no MediaRecorder:', err);
+        showToast('⚠️ Erro ao capturar stream para o YouTube.');
+        stopYoutubeLiveStream();
+      }
+    }
+
+    function stopYoutubeLiveStream() {
+      const wasLive = isLiveStreaming;
+      isLiveStreaming = false;
+      clearInterval(liveTimerInterval);
+
+      if (liveMediaRecorder && liveMediaRecorder.state !== 'inactive') {
+        try { liveMediaRecorder.stop(); } catch (e) {}
+      }
+      liveMediaRecorder = null;
+
+      if (rtmpWs) {
+        try {
+          if (rtmpWs.readyState === WebSocket.OPEN) {
+            rtmpWs.send(JSON.stringify({ type: 'stop_rtmp' }));
+          }
+          rtmpWs.close();
+        } catch (e) {}
+        rtmpWs = null;
+      }
+
+      stopCompositorStream();
+      updateYoutubeLiveUI(false);
+
+      if (wasLive) {
+        showToast('⏹️ Transmissão ao vivo no YouTube encerrada.');
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'live_state',
+            data: { isLive: false, streamerName: myName }
+          }));
+        }
+      }
+    }
+
+    if (btnLiveStream) {
+      btnLiveStream.addEventListener('click', () => {
+        if (isLiveStreaming) {
+          stopYoutubeLiveStream();
+        } else {
+          startYoutubeLiveStream();
+        }
+      });
+    }
+
+    if (btnModalToggleLive) {
+      btnModalToggleLive.addEventListener('click', () => {
+        if (isLiveStreaming) {
+          stopYoutubeLiveStream();
+        } else {
+          startYoutubeLiveStream();
+        }
+      });
+    }
+
     // Sair da Chamada
     btnLeaveCall.addEventListener('click', () => {
       if (isRecording) stopMeetingRecording();
+      if (isLiveStreaming) stopYoutubeLiveStream();
       clearInterval(effectsLoopInterval);
       if (rawCameraVideoTrack) rawCameraVideoTrack.stop();
       if (localStream) localStream.getTracks().forEach(t => t.stop());
@@ -2826,6 +3182,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       initLobby();
       initSettings();
+      initYoutubeSettings();
     });
   </script>
 </body>

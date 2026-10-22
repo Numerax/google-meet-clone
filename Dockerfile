@@ -8,8 +8,12 @@ COPY rust-server/src ./src
 
 RUN cargo build --release
 
-# Estágio 2: Imagem final ultra leve de produção (~20MB)
+# Estágio 2: Imagem final de produção com FFmpeg para transmissão YouTube Live (RTMP)
 FROM debian:bookworm-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
