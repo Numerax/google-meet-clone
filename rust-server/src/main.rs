@@ -189,8 +189,14 @@ async fn handle_socket(socket: WebSocket, rooms: Rooms) {
                         }
                     }
 
-                    // 4. Reações, Mão Levantada, Apresentação e Estado de Mídia (Broadcast para a sala)
-                    else if msg_type == "reaction" || msg_type == "raise_hand" || msg_type == "media_state" || msg_type == "presentation_state" {
+                    // 4. Reações, Mão Levantada, Apresentação, Gravação, Live e Estado de Mídia (Broadcast para a sala)
+                    else if msg_type == "reaction"
+                        || msg_type == "raise_hand"
+                        || msg_type == "media_state"
+                        || msg_type == "presentation_state"
+                        || msg_type == "recording_state"
+                        || msg_type == "live_state"
+                    {
                         if let Some(room_id) = &current_room_id {
                             let rooms_guard = rooms.read().await;
                             if let Some(room) = rooms_guard.get(room_id) {
