@@ -1707,7 +1707,9 @@
       ctx.drawImage(video, dx, dy, dw, dh);
     }
 
-    function drawParticipantTileOnCanvas(ctx, cardElem, x, y, w, h) {
+    let compositorFrameTick = 0;
+
+    function drawParticipantTileOnCanvas(ctx, cardElem, x, y, w, h, radius = 0) {
       const id = cardElem.id.replace('card_', '');
       const videoElem = document.getElementById(`video_${id}`);
       const nameSpan = cardElem.querySelector('.truncate');
@@ -1717,8 +1719,13 @@
       const isHandUp = handElem && !handElem.classList.contains('hidden');
 
       ctx.save();
-      drawRoundRectPath(ctx, x, y, w, h, 16);
-      ctx.fillStyle = '#3c4043';
+      if (radius > 0) {
+        drawRoundRectPath(ctx, x, y, w, h, radius);
+      } else {
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+      }
+      ctx.fillStyle = '#202124';
       ctx.fill();
       ctx.clip();
 
@@ -1727,59 +1734,66 @@
         drawVideoCover(ctx, videoElem, x, y, w, h, id === 'local');
       } else {
         // Desenha Avatar Centralizado quando a câmera está desligada
-        const radius = Math.min(w, h) * 0.16;
+        const avatarRadius = Math.min(w, h) * 0.16;
         const cx = x + w / 2;
         const cy = y + h / 2;
         ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.arc(cx, cy, avatarRadius, 0, Math.PI * 2);
         ctx.fillStyle = '#4f46e5';
         ctx.fill();
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(radius * 0.9)}px sans-serif`;
+        ctx.font = `bold ${Math.round(avatarRadius * 0.9)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(displayName.charAt(0).toUpperCase(), cx, cy);
       }
 
       // Badge do Nome no Canto Inferior Esquerdo
-      ctx.font = '600 13px sans-serif';
+      ctx.font = '600 14px sans-serif';
       const textWidth = ctx.measureText(displayName).width;
-      const pillW = Math.min(w - 24, textWidth + 28);
-      const pillH = 26;
-      const pillX = x + 12;
-      const pillY = y + h - pillH - 12;
+      const pillW = Math.min(w - 28, textWidth + 28);
+      const pillH = 28;
+      const pillX = x + 16;
+      const pillY = y + h - pillH - 16;
 
-      drawRoundRectPath(ctx, pillX, pillY, pillW, pillH, 13);
-      ctx.fillStyle = 'rgba(32, 33, 36, 0.82)';
+      drawRoundRectPath(ctx, pillX, pillY, pillW, pillH, 14);
+      ctx.fillStyle = 'rgba(24, 25, 26, 0.78)';
       ctx.fill();
 
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(displayName, pillX + 12, pillY + pillH / 2);
+      ctx.fillText(displayName, pillX + 14, pillY + pillH / 2);
 
       // Badge de Mão Levantada se ativa
       if (isHandUp) {
         const handText = '✋ Mão levantada';
         ctx.font = 'bold 12px sans-serif';
         const hw = ctx.measureText(handText).width + 20;
-        drawRoundRectPath(ctx, x + w - hw - 12, y + 12, hw, 24, 12);
+        drawRoundRectPath(ctx, x + w - hw - 16, y + 16, hw, 26, 13);
         ctx.fillStyle = '#f59e0b';
         ctx.fill();
         ctx.fillStyle = '#0f172a';
-        ctx.fillText(handText, x + w - hw - 2, y + 24);
+        ctx.fillText(handText, x + w - hw - 6, y + 29);
       }
 
       ctx.restore();
 
-      // Borda luminosa se estiver falando
-      ctx.save();
-      drawRoundRectPath(ctx, x, y, w, h, 16);
-      ctx.lineWidth = isSpeaking ? 4 : 1.5;
-      ctx.strokeStyle = isSpeaking ? '#3b82f6' : 'rgba(255,255,255,0.08)';
-      ctx.stroke();
-      ctx.restore();
+      // Destaque sutil apenas se estiver falando
+      if (isSpeaking) {
+        ctx.save();
+        if (radius > 0) {
+          drawRoundRectPath(ctx, x + 2, y + 2, w - 4, h - 4, radius);
+        } else {
+          ctx.beginPath();
+          ctx.rect(x + 2, y + 2, w - 4, h - 4);
+        }
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#3b82f6';
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     function renderCompositorFrame() {
@@ -1788,83 +1802,80 @@
       const W = compositorCanvas.width;
       const H = compositorCanvas.height;
 
-      // Fundo padrão do Google Meet
-      ctx.fillStyle = '#202124';
+      // Fundo base escuro (aparece apenas nas linhas divisórias de 4px quando há múltiplos participantes)
+      ctx.fillStyle = '#111214';
       ctx.fillRect(0, 0, W, H);
 
       const isSpotlight = spotlightArea && !spotlightArea.classList.contains('hidden');
       const cards = Array.from(videoGrid.children);
 
       if (isSpotlight && spotlightVideo && spotlightVideo.readyState >= 2) {
-        // Modo Apresentação (Spotlight à esquerda 76%, Participantes empilhados à direita 24%)
-        const spotX = 16;
-        const spotY = 16;
-        const spotW = W - 310;
-        const spotH = H - 32;
+        // Modo Apresentação Full-Bleed (Apresentação ocupando toda a esquerda sem bordas externas + barra lateral colada à direita)
+        const sideW = Math.round(W * 0.21);
+        const gap = 4;
+        const spotW = W - sideW - gap;
+        const spotH = H;
 
         ctx.save();
-        drawRoundRectPath(ctx, spotX, spotY, spotW, spotH, 16);
-        ctx.fillStyle = '#18191a';
+        ctx.beginPath();
+        ctx.rect(0, 0, spotW, spotH);
+        ctx.fillStyle = '#000000';
         ctx.fill();
         ctx.clip();
-        drawVideoContain(ctx, spotlightVideo, spotX, spotY, spotW, spotH);
+        drawVideoContain(ctx, spotlightVideo, 0, 0, spotW, spotH);
 
         // Título da Apresentação
         const titleText = spotlightTitle ? spotlightTitle.textContent.trim() : 'Apresentação';
         ctx.font = '600 13px sans-serif';
         const tw = ctx.measureText(titleText).width + 28;
-        drawRoundRectPath(ctx, spotX + 14, spotY + 14, tw, 28, 14);
-        ctx.fillStyle = 'rgba(32, 33, 36, 0.88)';
+        drawRoundRectPath(ctx, 16, 16, tw, 28, 14);
+        ctx.fillStyle = 'rgba(24, 25, 26, 0.85)';
         ctx.fill();
         ctx.fillStyle = '#60a5fa';
-        ctx.fillText('● ' + titleText, spotX + 24, spotY + 28);
+        ctx.fillText('● ' + titleText, 26, 30);
         ctx.restore();
 
-        // Participantes na barra lateral direita
-        const sideX = spotX + spotW + 14;
-        const sideW = W - sideX - 16;
+        // Participantes na coluna lateral direita (Full-Height)
+        const sideX = spotW + gap;
         const maxSideCards = Math.min(cards.length, 4);
-        const gap = 12;
-        const cardH = Math.min(165, (spotH - gap * (maxSideCards - 1)) / Math.max(1, maxSideCards));
+        const cardH = (H - gap * (maxSideCards - 1)) / Math.max(1, maxSideCards);
 
         for (let i = 0; i < maxSideCards; i++) {
-          const cy = spotY + i * (cardH + gap);
-          drawParticipantTileOnCanvas(ctx, cards[i], sideX, cy, sideW, cardH);
+          const cy = i * (cardH + gap);
+          drawParticipantTileOnCanvas(ctx, cards[i], sideX, cy, sideW, cardH, 0);
         }
       } else {
-        // Modo Grade Normal (1, 2, 4, 6+ participantes)
+        // Modo Tela Cheia (Full-Bleed 100% da área 16:9 sem bordas externas!)
         const count = cards.length;
-        if (count > 0) {
-          let cols = 1;
+        if (count === 1) {
+          // 1 Participante: ocupa 100% da tela (0, 0, W, H)
+          drawParticipantTileOnCanvas(ctx, cards[0], 0, 0, W, H, 0);
+        } else if (count > 1) {
+          let cols = 2;
           let rows = 1;
           if (count === 2) { cols = 2; rows = 1; }
           else if (count <= 4) { cols = 2; rows = 2; }
           else if (count <= 6) { cols = 3; rows = 2; }
           else { cols = 4; rows = Math.ceil(count / 4); }
 
-          const padX = count === 1 ? 140 : 20;
-          const padY = count === 1 ? 36 : 20;
-          const gap = 16;
-          const availW = W - padX * 2 - gap * (cols - 1);
-          const availH = H - padY * 2 - gap * (rows - 1);
-          const cellW = availW / cols;
-          const cellH = availH / rows;
+          const gap = 4; // Divisória fina estilo transmissão de TV (sem margem externa)
+          const cellW = (W - gap * (cols - 1)) / cols;
+          const cellH = (H - gap * (rows - 1)) / rows;
 
           for (let i = 0; i < count; i++) {
             const r = Math.floor(i / cols);
             const c = i % cols;
-            const cx = padX + c * (cellW + gap);
-            const cy = padY + r * (cellH + gap);
-            drawParticipantTileOnCanvas(ctx, cards[i], cx, cy, cellW, cellH);
+            const cx = c * (cellW + gap);
+            const cy = r * (cellH + gap);
+            drawParticipantTileOnCanvas(ctx, cards[i], cx, cy, cellW, cellH, 0);
           }
         }
       }
 
-      // Marca d'água sutil no canto inferior direito
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-      ctx.font = '500 11px monospace';
-      ctx.textAlign = 'right';
-      ctx.fillText(`Google Meet • ${currentRoom}`, W - 22, H - 10);
+      // Micro-variação invisível (1x1px) para forçar o CanvasCaptureMediaStreamTrack do navegador a enviar 30 FPS constantes para o YouTube mesmo em cenas estáticas!
+      compositorFrameTick = (compositorFrameTick + 1) & 1;
+      ctx.fillStyle = compositorFrameTick ? 'rgba(0,0,0,0.01)' : 'rgba(255,255,255,0.01)';
+      ctx.fillRect(0, 0, 1, 1);
     }
 
     // =========================================================================
@@ -3064,12 +3075,28 @@
       }
     }
 
+    function getSupportedLiveMimeType() {
+      // Prioriza H.264 (aceleração por hardware no Mac) e VP8 (ultra leve para o FFmpeg no Render), evitando o peso de CPU do VP9
+      const types = [
+        'video/webm;codecs=h264,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm',
+        'video/mp4'
+      ];
+      for (const t of types) {
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported(t)) {
+          return t;
+        }
+      }
+      return '';
+    }
+
     function beginLiveMediaRecorderPump(quality) {
       if (isLiveStreaming) return;
       try {
         const composedStream = startCompositorStream(quality);
-        const mimeType = getSupportedRecorderMimeType();
-        const bitrate = quality === '1080p' ? 4500000 : 2800000;
+        const mimeType = getSupportedLiveMimeType();
+        const bitrate = quality === '1080p' ? 2800000 : 1800000;
         const options = mimeType ? { mimeType, videoBitsPerSecond: bitrate } : { videoBitsPerSecond: bitrate };
 
         liveMediaRecorder = new MediaRecorder(composedStream, options);
@@ -3083,7 +3110,7 @@
           }
         };
 
-        liveMediaRecorder.start(250); // Envia pacotes contínuos de 250ms de baixa latência para o FFmpeg
+        liveMediaRecorder.start(200); // Envia pacotes contínuos de 200ms de baixa latência para o FFmpeg
         isLiveStreaming = true;
         liveSeconds = 0;
 

@@ -325,10 +325,10 @@ async fn handle_rtmp_socket(socket: WebSocket) {
                         }
 
                         let full_rtmp_url = format!("{}/{}", rtmp_base, stream_key);
-                        let (v_bitrate, v_maxrate, v_bufsize) = if quality == "1080p" {
-                            ("4500k", "4800k", "9000k")
+                        let (v_bitrate, v_bufsize) = if quality == "1080p" {
+                            ("4000k", "8000k")
                         } else {
-                            ("2800k", "3200k", "6000k")
+                            ("2500k", "5000k")
                         };
 
                         info!("[YouTube Live] Iniciando FFmpeg RTMP ({}) para {}", quality, rtmp_base);
@@ -336,21 +336,27 @@ async fn handle_rtmp_socket(socket: WebSocket) {
                         let spawn_res = Command::new("ffmpeg")
                             .args([
                                 "-loglevel", "warning",
-                                "-fflags", "+genpts",
+                                "-fflags", "+genpts+igndts+discardcorrupt",
+                                "-thread_queue_size", "1024",
                                 "-i", "pipe:0",
+                                "-vf", "fps=30",
                                 "-c:v", "libx264",
-                                "-preset", "veryfast",
+                                "-preset", "ultrafast",
                                 "-tune", "zerolatency",
                                 "-pix_fmt", "yuv420p",
                                 "-r", "30",
                                 "-g", "60",
+                                "-keyint_min", "60",
+                                "-sc_threshold", "0",
                                 "-b:v", v_bitrate,
-                                "-maxrate", v_maxrate,
+                                "-minrate", v_bitrate,
+                                "-maxrate", v_bitrate,
                                 "-bufsize", v_bufsize,
                                 "-c:a", "aac",
                                 "-b:a", "128k",
                                 "-ar", "44100",
                                 "-ac", "2",
+                                "-flvflags", "no_duration_filesize",
                                 "-f", "flv",
                                 &full_rtmp_url,
                             ])

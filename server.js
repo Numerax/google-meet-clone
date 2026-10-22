@@ -248,28 +248,34 @@ rtmpWss.on('connection', wsClient => {
           }
 
           const fullRtmpUrl = `${rtmpBase}/${streamKey}`;
-          const [vBitrate, vMaxrate, vBufsize] = quality === '1080p'
-            ? ['4500k', '4800k', '9000k']
-            : ['2800k', '3200k', '6000k'];
+          const [vBitrate, vBufsize] = quality === '1080p'
+            ? ['4000k', '8000k']
+            : ['2500k', '5000k'];
 
           try {
             ffmpegProc = spawn('ffmpeg', [
               '-loglevel', 'warning',
-              '-fflags', '+genpts',
+              '-fflags', '+genpts+igndts+discardcorrupt',
+              '-thread_queue_size', '1024',
               '-i', 'pipe:0',
+              '-vf', 'fps=30',
               '-c:v', 'libx264',
-              '-preset', 'veryfast',
+              '-preset', 'ultrafast',
               '-tune', 'zerolatency',
               '-pix_fmt', 'yuv420p',
               '-r', '30',
               '-g', '60',
+              '-keyint_min', '60',
+              '-sc_threshold', '0',
               '-b:v', vBitrate,
-              '-maxrate', vMaxrate,
+              '-minrate', vBitrate,
+              '-maxrate', vBitrate,
               '-bufsize', vBufsize,
               '-c:a', 'aac',
               '-b:a', '128k',
               '-ar', '44100',
               '-ac', '2',
+              '-flvflags', 'no_duration_filesize',
               '-f', 'flv',
               fullRtmpUrl
             ]);
