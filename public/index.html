@@ -355,7 +355,8 @@
 
     function clearSpotlight() {
       spotlightArea.classList.add('hidden');
-      if (spotlightVideo.srcObject) {
+      if (spotlightVideo) {
+        spotlightVideo.pause();
         spotlightVideo.srcObject = null;
       }
       pinnedPeerId = null;
@@ -363,7 +364,13 @@
       updateGridLayout();
     }
 
-    btnUnpinSpotlight.addEventListener('click', clearSpotlight);
+    btnUnpinSpotlight.addEventListener('click', () => {
+      if (isScreenSharing) {
+        stopScreenSharing();
+      } else {
+        clearSpotlight();
+      }
+    });
 
     // WebRTC Peers: Map<peerId, { pc: RTCPeerConnection, name: string, stream: MediaStream }>
     const peers = new Map();
@@ -623,7 +630,7 @@
 
           // Apresentação de Tela (Modo Spotlight)
           else if (msg.type === 'presentation_state') {
-            if (msg.data.isPresenting) {
+            if (msg.data && msg.data.isPresenting) {
               const presenterPeer = peers.get(msg.data.presenterId);
               const stream = presenterPeer ? presenterPeer.stream : null;
               showToast(`🖥️ ${msg.data.presenterName} iniciou uma apresentação`);
@@ -635,6 +642,19 @@
             } else {
               showToast('Apresentação de tela encerrada');
               clearSpotlight();
+
+              // Força o refresh em todos os elementos de vídeo dos participantes para destravar o buffer do iOS Safari
+              const refreshRemoteVideos = () => {
+                peers.forEach((peerData, pid) => {
+                  const cardVideo = document.getElementById(`video_${pid}`);
+                  if (cardVideo && peerData.stream) {
+                    cardVideo.srcObject = peerData.stream;
+                    cardVideo.play().catch(e => console.warn('Erro ao restaurar vídeo:', e));
+                  }
+                });
+              };
+              refreshRemoteVideos();
+              setTimeout(refreshRemoteVideos, 300);
             }
           }
 
@@ -718,6 +738,12 @@
         console.log('[WebRTC] Faixa de mídia recebida de:', targetName, event.streams);
         const remoteStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
         peerData.stream = remoteStream;
+
+        // Garante que se a faixa for desmutada ou trocada, o elemento de vídeo dê play imediatamente
+        event.track.onunmute = () => {
+          const v = document.getElementById(`video_${targetPeerId}`);
+          if (v) v.play().catch(e => console.warn(e));
+        };
 
         const video = document.getElementById(`video_${targetPeerId}`);
         const avatar = document.getElementById(`avatar_${targetPeerId}`);
@@ -1015,14 +1041,9 @@
       }
     });
 
-    function stopScreenSharing() {
+    async function stopScreenSharing() {
       if (!isScreenSharing) return;
       isScreenSharing = false;
-
-      if (localScreenStream) {
-        localScreenStream.getTracks().forEach(t => t.stop());
-        localScreenStream = null;
-      }
 
       btnScreenShare.classList.remove('bg-blue-600', 'text-white');
       btnScreenShare.classList.add('bg-[#3c4043]');
@@ -1030,18 +1051,28 @@
       clearSpotlight();
       showToast('Apresentação finalizada');
 
-      // Restaura a câmera original nos peers
+      // 1. PRIMEIRO restaura a câmera original nos peers WebRTC ANTES de encerrar a faixa de tela
       if (localStream) {
         const camTrack = localStream.getVideoTracks()[0];
         for (const peer of peers.values()) {
           const sender = peer.pc.getSenders().find(s => s.track && s.track.kind === 'video');
           if (sender && camTrack) {
-            sender.replaceTrack(camTrack);
+            try {
+              await sender.replaceTrack(camTrack);
+            } catch (err) {
+              console.warn('[WebRTC] Erro ao restaurar câmera no peer:', err);
+            }
           }
         }
       }
 
-      // Notifica os outros participantes para desativarem o spotlight
+      // 2. DEPOIS encerra a captura de tela
+      if (localScreenStream) {
+        localScreenStream.getTracks().forEach(t => t.stop());
+        localScreenStream = null;
+      }
+
+      // 3. Notifica os outros participantes para desativarem o spotlight e atualizarem o grid
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
           type: 'presentation_state',
