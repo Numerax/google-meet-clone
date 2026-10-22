@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Google Meet Clone</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
   <style>
     @keyframes floatUp {
       0% { transform: translateY(0) scale(0.8); opacity: 1; }
@@ -38,14 +39,17 @@
           </div>
 
           <!-- Botões Flutuantes de Teste no Preview -->
-          <div class="absolute bottom-4 flex items-center gap-4">
-            <button id="btnLobbyToggleMic" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] border border-white/20 text-white flex items-center justify-center transition shadow-md">
+          <div class="absolute bottom-4 flex items-center gap-3">
+            <button id="btnLobbyToggleMic" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] border border-white/20 text-white flex items-center justify-center transition shadow-md" title="Testar Microfone">
               <svg id="lobbyMicIconOn" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
               <svg id="lobbyMicIconOff" class="w-5 h-5 text-red-400 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/></svg>
             </button>
-            <button id="btnLobbyToggleCam" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] border border-white/20 text-white flex items-center justify-center transition shadow-md">
+            <button id="btnLobbyToggleCam" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] border border-white/20 text-white flex items-center justify-center transition shadow-md" title="Testar Câmera">
               <svg id="lobbyCamIconOn" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
               <svg id="lobbyCamIconOff" class="w-5 h-5 text-red-400 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2zM16 16.73L5.27 6H16v10.73z"/></svg>
+            </button>
+            <button id="btnLobbyEffects" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] border border-white/20 text-white flex items-center justify-center transition shadow-md text-lg" title="Efeitos Visuais, Desfoque e Fundos">
+              ✨
             </button>
           </div>
         </div>
@@ -235,6 +239,11 @@
           </div>
         </div>
 
+        <!-- Efeitos Visuais & Fundo Virtual -->
+        <button id="btnVisualEffects" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Efeitos visuais, desfoque e fundos">
+          <span class="text-base sm:text-lg">✨</span>
+        </button>
+
         <!-- Compartilhar Tela -->
         <button id="btnScreenShare" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Apresentar agora">
           <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.11-.9-2-2-2H4c-1.11 0-2 .89-2 2v10c0 1.1.89 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6zm9 3l3 3h-2v3h-2v-3H10l3-3z"/></svg>
@@ -277,29 +286,29 @@
 
   <!-- ================= MODAL DE CONFIGURAÇÕES (ESTILO GOOGLE MEET) ================= -->
   <div id="settingsModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-[#2d2e30] border border-white/10 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div class="bg-[#2d2e30] border border-white/10 rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       
       <!-- Cabeçalho do Modal -->
       <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          <h2 class="text-base font-semibold text-white">Configurações do Google Meet</h2>
+          <h2 class="text-base font-semibold text-white">Configurações & Estúdio Visual</h2>
         </div>
         <button id="btnCloseSettings" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition text-lg">✕</button>
       </div>
 
       <!-- Corpo com Abas Laterais -->
-      <div class="flex flex-col sm:flex-row flex-1 overflow-hidden">
+      <div class="flex flex-col sm:flex-row flex-1 overflow-hidden min-h-0">
         
         <!-- Menu Lateral de Categorias -->
-        <div class="w-full sm:w-52 bg-[#252628] border-b sm:border-b-0 sm:border-r border-white/10 p-3 flex sm:flex-col gap-1.5 overflow-x-auto">
-          <button class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 font-medium text-xs text-left whitespace-nowrap">
+        <div class="w-full sm:w-52 bg-[#252628] border-b sm:border-b-0 sm:border-r border-white/10 p-3 flex sm:flex-col gap-1.5 overflow-x-auto flex-shrink-0">
+          <button id="tabSettingsStorage" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 font-medium text-xs text-left whitespace-nowrap transition">
             <span>💾</span>
             <span>Gravação & Disco</span>
           </button>
-          <button disabled class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-500 text-xs text-left whitespace-nowrap cursor-not-allowed" title="Em breve na Etapa 2">
+          <button id="tabSettingsEffects" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 font-medium text-xs text-left whitespace-nowrap transition">
             <span>✨</span>
-            <span>Efeitos & Fundos (Etapa 2)</span>
+            <span>Efeitos & Fundos</span>
           </button>
           <button disabled class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-500 text-xs text-left whitespace-nowrap cursor-not-allowed" title="Em breve na Etapa 3">
             <span>🔴</span>
@@ -307,8 +316,8 @@
           </button>
         </div>
 
-        <!-- Conteúdo da Aba: Gravação & Armazenamento Local -->
-        <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-5 text-xs">
+        <!-- ABA 1: Gravação & Armazenamento Local -->
+        <div id="panelSettingsStorage" class="flex-1 p-6 overflow-y-auto flex flex-col gap-5 text-xs">
           
           <div>
             <h3 class="text-sm font-semibold text-white mb-1">Pasta Local de Gravação (HD / SSD)</h3>
@@ -365,6 +374,106 @@
           </div>
 
         </div>
+
+        <!-- ABA 2: Efeitos Visuais, Desfoque & Fundos Virtuais (IA) -->
+        <div id="panelSettingsEffects" class="hidden flex-1 p-6 overflow-y-auto flex flex-col gap-5 text-xs">
+          
+          <!-- Mini Preview Ao Vivo no Topo -->
+          <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#202124] border border-white/10 rounded-xl p-3">
+            <div class="relative w-full sm:w-52 aspect-video bg-[#18191a] rounded-lg overflow-hidden border border-white/10 flex-shrink-0">
+              <video id="settingsPreviewVideo" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
+              <span id="aiEffectStatusBadge" class="absolute bottom-1.5 left-1.5 bg-black/75 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-emerald-400 font-medium">Original</span>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <h3 class="text-sm font-semibold text-white">Estúdio de Efeitos em Tempo Real</h3>
+              <p class="text-gray-400 leading-relaxed">
+                O recorte inteligente de silhueta (Google MediaPipe IA) separa você do ambiente em tempo real. Todos os convidados e a gravação verão o efeito escolhido.
+              </p>
+            </div>
+          </div>
+
+          <!-- Seção 1: Desfoque e Fundos Artificiais -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold text-gray-200">Desfoque e Fundos Virtuais:</span>
+              <input id="inputCustomBgImage" type="file" accept="image/*" class="hidden">
+              <button id="btnUploadCustomBg" class="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
+                <span>📤 + Enviar foto do Mac</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <button data-bg-mode="none" class="bg-option-btn ring-2 ring-blue-500 bg-[#202124] hover:bg-[#35373a] border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1.5 transition">
+                <span class="text-lg">🚫</span>
+                <span class="font-medium text-gray-200">Sem fundo</span>
+              </button>
+              <button data-bg-mode="blur-light" class="bg-option-btn bg-[#202124] hover:bg-[#35373a] border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1.5 transition">
+                <span class="text-lg">💧</span>
+                <span class="font-medium text-gray-200">Desfoque Leve</span>
+              </button>
+              <button data-bg-mode="blur-heavy" class="bg-option-btn bg-[#202124] hover:bg-[#35373a] border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1.5 transition">
+                <span class="text-lg">🌫️</span>
+                <span class="font-medium text-gray-200">Desfoque Forte</span>
+              </button>
+              <button data-bg-mode="office" class="bg-option-btn bg-[#202124] hover:bg-[#35373a] border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1.5 transition">
+                <span class="text-lg">🏢</span>
+                <span class="font-medium text-gray-200">Escritório</span>
+              </button>
+              <button data-bg-mode="library" class="bg-option-btn bg-[#202124] hover:bg-[#35373a] border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1.5 transition">
+                <span class="text-lg">📚</span>
+                <span class="font-medium text-gray-200">Biblioteca</span>
+              </button>
+              <button data-bg-mode="nature" class="bg-option-btn bg-[#202124] hover:bg-[#35373a] border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1.5 transition">
+                <span class="text-lg">🌿</span>
+                <span class="font-medium text-gray-200">Natureza</span>
+              </button>
+              <button data-bg-mode="studio" class="bg-option-btn bg-[#202124] hover:bg-[#35373a] border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1.5 transition">
+                <span class="text-lg">🌌</span>
+                <span class="font-medium text-gray-200">Estúdio Dark</span>
+              </button>
+              <button data-bg-mode="custom" id="btnCustomBgTile" class="bg-option-btn bg-[#202124] hover:bg-[#35373a] border border-dashed border-white/20 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1.5 transition">
+                <span class="text-lg">🖼️</span>
+                <span class="font-medium text-blue-400">Foto do Mac</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Seção 2: Filtros de Cor e Iluminação -->
+          <div class="pt-3 border-t border-white/10 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-gray-200">Filtros de Cor & Luz:</span>
+              <button id="btnResetVisualEffects" class="text-gray-400 hover:text-white text-[11px] underline">Resetar tudo</button>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <button data-color-filter="none" class="color-filter-btn ring-2 ring-blue-500 bg-[#202124] px-3 py-1.5 rounded-full text-gray-200 font-medium border border-white/10 transition">Normal</button>
+              <button data-color-filter="warm" class="color-filter-btn bg-[#202124] px-3 py-1.5 rounded-full text-gray-200 font-medium border border-white/10 transition">☀️ Quente</button>
+              <button data-color-filter="cool" class="color-filter-btn bg-[#202124] px-3 py-1.5 rounded-full text-gray-200 font-medium border border-white/10 transition">❄️ Frio</button>
+              <button data-color-filter="cinema" class="color-filter-btn bg-[#202124] px-3 py-1.5 rounded-full text-gray-200 font-medium border border-white/10 transition">🎬 Cinema</button>
+              <button data-color-filter="bw" class="color-filter-btn bg-[#202124] px-3 py-1.5 rounded-full text-gray-200 font-medium border border-white/10 transition">🖤 P&amp;B</button>
+              <button data-color-filter="sepia" class="color-filter-btn bg-[#202124] px-3 py-1.5 rounded-full text-gray-200 font-medium border border-white/10 transition">📜 Sépia</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[11px] text-gray-400">
+                  <span>Brilho da Câmera</span>
+                  <span id="lblBrightnessVal">100%</span>
+                </div>
+                <input id="sliderBrightness" type="range" min="60" max="150" value="100" class="w-full accent-blue-500">
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[11px] text-gray-400">
+                  <span>Contraste</span>
+                  <span id="lblContrastVal">100%</span>
+                </div>
+                <input id="sliderContrast" type="range" min="60" max="150" value="100" class="w-full accent-blue-500">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
       <!-- Rodapé do Modal -->
@@ -545,6 +654,9 @@
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
           audio: true
         });
+        if (typeof registerRawCameraStream === 'function') {
+          registerRawCameraStream(localStream);
+        }
         lobbyVideo.srcObject = localStream;
       } catch (err) {
         console.warn('Câmera ou microfone não puderam ser abertos automaticamente:', err);
@@ -588,6 +700,9 @@
       isCamOff = off;
       if (localStream) {
         localStream.getVideoTracks().forEach(t => t.enabled = !isCamOff);
+      }
+      if (typeof rawCameraVideoTrack !== 'undefined' && rawCameraVideoTrack) {
+        rawCameraVideoTrack.enabled = !isCamOff;
       }
       lobbyVideo.classList.toggle('hidden', isCamOff);
       lobbyAvatar.classList.toggle('hidden', !isCamOff);
@@ -1774,8 +1889,43 @@
       updateFolderSettingsUI();
     }
 
-    function openSettingsModal() {
+    const tabSettingsStorage = document.getElementById('tabSettingsStorage');
+    const tabSettingsEffects = document.getElementById('tabSettingsEffects');
+    const panelSettingsStorage = document.getElementById('panelSettingsStorage');
+    const panelSettingsEffects = document.getElementById('panelSettingsEffects');
+    const settingsPreviewVideo = document.getElementById('settingsPreviewVideo');
+
+    function switchSettingsTab(tabName) {
+      const isEffects = tabName === 'effects';
+      if (panelSettingsStorage) panelSettingsStorage.classList.toggle('hidden', isEffects);
+      if (panelSettingsEffects) panelSettingsEffects.classList.toggle('hidden', !isEffects);
+
+      if (tabSettingsStorage) {
+        tabSettingsStorage.className = isEffects
+          ? 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 font-medium text-xs text-left whitespace-nowrap transition'
+          : 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 font-medium text-xs text-left whitespace-nowrap transition';
+      }
+      if (tabSettingsEffects) {
+        tabSettingsEffects.className = isEffects
+          ? 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 font-medium text-xs text-left whitespace-nowrap transition'
+          : 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 font-medium text-xs text-left whitespace-nowrap transition';
+      }
+
+      if (isEffects && settingsPreviewVideo && localStream) {
+        if (settingsPreviewVideo.srcObject !== localStream) {
+          settingsPreviewVideo.srcObject = localStream;
+        }
+        settingsPreviewVideo.play().catch(() => {});
+      }
+    }
+
+    if (tabSettingsStorage) tabSettingsStorage.addEventListener('click', () => switchSettingsTab('storage'));
+    if (tabSettingsEffects) tabSettingsEffects.addEventListener('click', () => switchSettingsTab('effects'));
+
+    function openSettingsModal(initialTab = 'storage') {
       updateFolderSettingsUI();
+      const targetTab = (typeof initialTab === 'string') ? initialTab : 'storage';
+      switchSettingsTab(targetTab);
       settingsModal.classList.remove('hidden');
     }
 
@@ -1794,8 +1944,8 @@
       settingsModal.classList.add('hidden');
     }
 
-    if (btnOpenSettings) btnOpenSettings.addEventListener('click', openSettingsModal);
-    if (btnLobbySettings) btnLobbySettings.addEventListener('click', openSettingsModal);
+    if (btnOpenSettings) btnOpenSettings.addEventListener('click', () => openSettingsModal('storage'));
+    if (btnLobbySettings) btnLobbySettings.addEventListener('click', () => openSettingsModal('storage'));
     if (btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettingsModal);
     if (btnSaveAndCloseSettings) btnSaveAndCloseSettings.addEventListener('click', closeSettingsModal);
 
@@ -2109,9 +2259,564 @@
       });
     }
 
+    // =========================================================================
+    // 15. MOTOR DE EFEITOS VISUAIS, DESFOQUE & FUNDOS VIRTUAIS COM IA (MEDIAPIPE)
+    // =========================================================================
+    const btnLobbyEffects = document.getElementById('btnLobbyEffects');
+    const btnVisualEffects = document.getElementById('btnVisualEffects');
+    const aiEffectStatusBadge = document.getElementById('aiEffectStatusBadge');
+    const inputCustomBgImage = document.getElementById('inputCustomBgImage');
+    const btnUploadCustomBg = document.getElementById('btnUploadCustomBg');
+    const btnCustomBgTile = document.getElementById('btnCustomBgTile');
+    const btnResetVisualEffects = document.getElementById('btnResetVisualEffects');
+    const sliderBrightness = document.getElementById('sliderBrightness');
+    const sliderContrast = document.getElementById('sliderContrast');
+    const lblBrightnessVal = document.getElementById('lblBrightnessVal');
+    const lblContrastVal = document.getElementById('lblContrastVal');
+    const bgOptionBtns = document.querySelectorAll('.bg-option-btn');
+    const colorFilterBtns = document.querySelectorAll('.color-filter-btn');
+
+    let rawCameraVideoTrack = null;
+    let rawCameraVideoElem = null;
+    let effectsCanvas = null;
+    let effectsCtx = null;
+    let effectsStream = null;
+    let effectsLoopInterval = null;
+    let selfieSegmentation = null;
+    let isSegmentationReady = false;
+    let isSegmentationProcessing = false;
+
+    const effectState = {
+      bgMode: 'none',       // 'none' | 'blur-light' | 'blur-heavy' | 'office' | 'library' | 'nature' | 'studio' | 'custom'
+      colorFilter: 'none',  // 'none' | 'warm' | 'cool' | 'cinema' | 'bw' | 'sepia'
+      brightness: 100,      // 60..150
+      contrast: 100         // 60..150
+    };
+
+    const virtualBgCanvases = {};
+    let customBgImageObj = null;
+
+    function registerRawCameraStream(stream) {
+      if (!stream) return;
+      const vTrack = stream.getVideoTracks()[0];
+      if (!vTrack) return;
+      rawCameraVideoTrack = vTrack;
+
+      if (!rawCameraVideoElem) {
+        rawCameraVideoElem = document.createElement('video');
+        rawCameraVideoElem.autoplay = true;
+        rawCameraVideoElem.playsInline = true;
+        rawCameraVideoElem.muted = true;
+      }
+      rawCameraVideoElem.srcObject = new MediaStream([vTrack]);
+      rawCameraVideoElem.play().catch(() => {});
+    }
+
+    // Gera cenários virtuais HD em Canvas (zero latência de rede e 100% livre de bloqueio CORS)
+    function getOrBuildVirtualBackground(mode) {
+      if (mode === 'custom' && customBgImageObj) {
+        return customBgImageObj;
+      }
+      if (virtualBgCanvases[mode]) {
+        return virtualBgCanvases[mode];
+      }
+
+      const c = document.createElement('canvas');
+      c.width = 960;
+      c.height = 540;
+      const g = c.getContext('2d');
+
+      if (mode === 'office') {
+        // Escritório Executivo Moderno com vista panorâmica
+        const sky = g.createLinearGradient(0, 0, 0, 540);
+        sky.addColorStop(0, '#1e293b');
+        sky.addColorStop(0.55, '#334155');
+        sky.addColorStop(1, '#0f172a');
+        g.fillStyle = sky;
+        g.fillRect(0, 0, 960, 540);
+
+        // Prédios iluminados ao fundo (bokeh suave)
+        g.fillStyle = '#0f172a';
+        const blds = [[60, 180, 90, 360], [170, 130, 110, 410], [300, 210, 85, 330], [420, 110, 130, 430], [580, 160, 100, 380], [700, 140, 120, 400], [840, 190, 90, 350]];
+        blds.forEach(([bx, by, bw, bh]) => {
+          g.fillStyle = 'rgba(15, 23, 42, 0.85)';
+          g.fillRect(bx, by, bw, bh);
+          g.fillStyle = 'rgba(253, 224, 71, 0.22)';
+          for (let wy = by + 20; wy < by + bh - 40; wy += 28) {
+            for (let wx = bx + 14; wx < bx + bw - 20; wx += 24) {
+              if ((wx + wy) % 3 !== 0) g.fillRect(wx, wy, 10, 14);
+            }
+          }
+        });
+
+        // Parede lateral amadeirada e divisórias de vidro
+        const wood = g.createLinearGradient(0, 0, 220, 0);
+        wood.addColorStop(0, '#451a03');
+        wood.addColorStop(1, '#78350f');
+        g.fillStyle = wood;
+        g.fillRect(0, 0, 190, 540);
+
+        // Luminária pendente quente no teto
+        const glow = g.createRadialGradient(480, 60, 10, 480, 60, 280);
+        glow.addColorStop(0, 'rgba(254, 240, 138, 0.45)');
+        glow.addColorStop(1, 'rgba(254, 240, 138, 0)');
+        g.fillStyle = glow;
+        g.fillRect(0, 0, 960, 540);
+
+        // Bancada inferior
+        g.fillStyle = '#1e293b';
+        g.fillRect(0, 440, 960, 100);
+      } else if (mode === 'library') {
+        // Biblioteca Aconchegante com Estantes e Luz Quente
+        const bg = g.createLinearGradient(0, 0, 0, 540);
+        bg.addColorStop(0, '#27170e');
+        bg.addColorStop(1, '#140b06');
+        g.fillStyle = bg;
+        g.fillRect(0, 0, 960, 540);
+
+        const bookColors = ['#991b1b', '#1e40af', '#065f46', '#92400e', '#5b21b6', '#b45309', '#374151'];
+        for (let shelfY = 80; shelfY <= 440; shelfY += 110) {
+          g.fillStyle = '#451a03';
+          g.fillRect(40, shelfY + 75, 880, 14);
+          let bx = 55;
+          while (bx < 890) {
+            const bw = 14 + ((bx * 7) % 16);
+            const bh = 52 + ((bx * 13) % 22);
+            g.fillStyle = bookColors[(bx + shelfY) % bookColors.length];
+            g.fillRect(bx, shelfY + 75 - bh, bw, bh);
+            g.fillStyle = 'rgba(255,255,255,0.12)';
+            g.fillRect(bx + 2, shelfY + 80 - bh, bw - 4, 4);
+            bx += bw + 3;
+          }
+        }
+        // Abajur quente à direita
+        const lamp = g.createRadialGradient(780, 220, 15, 780, 220, 340);
+        lamp.addColorStop(0, 'rgba(251, 191, 36, 0.5)');
+        lamp.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        g.fillStyle = lamp;
+        g.fillRect(0, 0, 960, 540);
+      } else if (mode === 'nature') {
+        // Paisagem Natural (Montanhas, Lago Sereno e Luz Dourada)
+        const sky = g.createLinearGradient(0, 0, 0, 340);
+        sky.addColorStop(0, '#0284c7');
+        sky.addColorStop(0.6, '#38bdf8');
+        sky.addColorStop(1, '#bae6fd');
+        g.fillStyle = sky;
+        g.fillRect(0, 0, 960, 340);
+
+        // Sol suave
+        const sun = g.createRadialGradient(740, 110, 10, 740, 110, 160);
+        sun.addColorStop(0, 'rgba(254, 249, 195, 0.9)');
+        sun.addColorStop(1, 'rgba(254, 249, 195, 0)');
+        g.fillStyle = sun;
+        g.fillRect(0, 0, 960, 340);
+
+        // Montanhas em camadas
+        g.fillStyle = '#334155';
+        g.beginPath();
+        g.moveTo(0, 340); g.lineTo(180, 150); g.lineTo(390, 290); g.lineTo(620, 130); g.lineTo(840, 270); g.lineTo(960, 190); g.lineTo(960, 340);
+        g.fill();
+
+        g.fillStyle = '#065f46';
+        g.beginPath();
+        g.moveTo(0, 360); g.lineTo(120, 230); g.lineTo(310, 320); g.lineTo(520, 210); g.lineTo(760, 310); g.lineTo(960, 240); g.lineTo(960, 360);
+        g.fill();
+
+        // Lago espelhado
+        const lake = g.createLinearGradient(0, 340, 0, 540);
+        lake.addColorStop(0, '#0369a1');
+        lake.addColorStop(1, '#0f172a');
+        g.fillStyle = lake;
+        g.fillRect(0, 340, 960, 200);
+      } else {
+        // Estúdio Dark Podcast com iluminação Neon (Azul & Magenta)
+        g.fillStyle = '#090a0f';
+        g.fillRect(0, 0, 960, 540);
+
+        // Painéis acústicos hexagonais sutis
+        g.strokeStyle = 'rgba(255,255,255,0.05)';
+        g.lineWidth = 2;
+        for (let y = 60; y < 480; y += 60) {
+          for (let x = 80; x < 880; x += 60) {
+            g.strokeRect(x, y, 48, 48);
+          }
+        }
+
+        const neonLeft = g.createRadialGradient(140, 270, 10, 140, 270, 360);
+        neonLeft.addColorStop(0, 'rgba(59, 130, 246, 0.45)');
+        neonLeft.addColorStop(1, 'rgba(59, 130, 246, 0)');
+        g.fillStyle = neonLeft;
+        g.fillRect(0, 0, 960, 540);
+
+        const neonRight = g.createRadialGradient(820, 270, 10, 820, 270, 360);
+        neonRight.addColorStop(0, 'rgba(168, 85, 247, 0.42)');
+        neonRight.addColorStop(1, 'rgba(168, 85, 247, 0)');
+        g.fillStyle = neonRight;
+        g.fillRect(0, 0, 960, 540);
+      }
+
+      virtualBgCanvases[mode] = c;
+      return c;
+    }
+
+    function buildCssColorFilterString() {
+      const parts = [];
+      if (effectState.brightness !== 100) parts.push(`brightness(${effectState.brightness}%)`);
+      if (effectState.contrast !== 100) parts.push(`contrast(${effectState.contrast}%)`);
+
+      switch (effectState.colorFilter) {
+        case 'warm':
+          parts.push('sepia(28%) saturate(135%) hue-rotate(-8deg)');
+          break;
+        case 'cool':
+          parts.push('saturate(110%) hue-rotate(14deg) brightness(103%)');
+          break;
+        case 'cinema':
+          parts.push('contrast(118%) saturate(125%) brightness(96%)');
+          break;
+        case 'bw':
+          parts.push('grayscale(100%) contrast(115%)');
+          break;
+        case 'sepia':
+          parts.push('sepia(85%) contrast(105%)');
+          break;
+      }
+      return parts.length > 0 ? parts.join(' ') : 'none';
+    }
+
+    function isAnyVisualEffectActive() {
+      return (
+        effectState.bgMode !== 'none' ||
+        effectState.colorFilter !== 'none' ||
+        effectState.brightness !== 100 ||
+        effectState.contrast !== 100
+      );
+    }
+
+    function updateVisualEffectsBadges() {
+      const active = isAnyVisualEffectActive();
+      if (btnVisualEffects) {
+        btnVisualEffects.classList.toggle('bg-blue-600', active);
+        btnVisualEffects.classList.toggle('hover:bg-blue-500', active);
+        btnVisualEffects.classList.toggle('bg-[#3c4043]', !active);
+        btnVisualEffects.classList.toggle('hover:bg-[#474a4d]', !active);
+      }
+
+      if (aiEffectStatusBadge) {
+        if (!active) {
+          aiEffectStatusBadge.textContent = 'Original';
+          aiEffectStatusBadge.className = 'absolute bottom-1.5 left-1.5 bg-black/75 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-emerald-400 font-medium';
+        } else {
+          const labels = {
+            'none': 'Filtro de Cor',
+            'blur-light': 'IA • Desfoque Leve',
+            'blur-heavy': 'IA • Desfoque Forte',
+            'office': 'IA • Escritório',
+            'library': 'IA • Biblioteca',
+            'nature': 'IA • Natureza',
+            'studio': 'IA • Estúdio Dark',
+            'custom': 'IA • Foto do Mac'
+          };
+          aiEffectStatusBadge.textContent = labels[effectState.bgMode] || 'Efeito Ativo';
+          aiEffectStatusBadge.className = 'absolute bottom-1.5 left-1.5 bg-blue-600/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-white font-semibold shadow';
+        }
+      }
+    }
+
+    function ensureSelfieSegmentationLoaded() {
+      if (selfieSegmentation || typeof SelfieSegmentation === 'undefined') return;
+      try {
+        selfieSegmentation = new SelfieSegmentation({
+          locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+        });
+        selfieSegmentation.setOptions({
+          modelSelection: 1
+        });
+        selfieSegmentation.onResults(onSelfieSegmentationResults);
+        isSegmentationReady = true;
+        console.log('[Effects] MediaPipe SelfieSegmentation inicializado com sucesso.');
+      } catch (err) {
+        console.warn('[Effects] Falha ao inicializar MediaPipe SelfieSegmentation:', err);
+      }
+    }
+
+    function onSelfieSegmentationResults(results) {
+      if (!effectsCtx || !effectsCanvas) return;
+      const W = effectsCanvas.width;
+      const H = effectsCanvas.height;
+
+      effectsCtx.save();
+      effectsCtx.clearRect(0, 0, W, H);
+
+      // 1. Desenha a máscara da silhueta humana com borda suavizada
+      effectsCtx.filter = 'blur(2px)';
+      effectsCtx.drawImage(results.segmentationMask, 0, 0, W, H);
+
+      // 2. Mantém apenas a pessoa (source-in) aplicando os filtros de cor/luz escolhidos
+      effectsCtx.globalCompositeOperation = 'source-in';
+      effectsCtx.filter = buildCssColorFilterString();
+      effectsCtx.drawImage(results.image, 0, 0, W, H);
+
+      // 3. Desenha o fundo atrás da pessoa (destination-over)
+      effectsCtx.globalCompositeOperation = 'destination-over';
+      if (effectState.bgMode === 'blur-light') {
+        effectsCtx.filter = 'blur(8px)';
+        effectsCtx.drawImage(results.image, 0, 0, W, H);
+      } else if (effectState.bgMode === 'blur-heavy') {
+        effectsCtx.filter = 'blur(20px)';
+        effectsCtx.drawImage(results.image, 0, 0, W, H);
+      } else {
+        effectsCtx.filter = 'none';
+        const bgImg = getOrBuildVirtualBackground(effectState.bgMode);
+        if (bgImg) {
+          effectsCtx.drawImage(bgImg, 0, 0, W, H);
+        } else {
+          effectsCtx.filter = 'blur(14px)';
+          effectsCtx.drawImage(results.image, 0, 0, W, H);
+        }
+      }
+
+      effectsCtx.restore();
+    }
+
+    async function renderEffectsFrame() {
+      if (!rawCameraVideoElem || rawCameraVideoElem.readyState < 2 || isCamOff) return;
+      if (!effectsCanvas) return;
+
+      const W = effectsCanvas.width;
+      const H = effectsCanvas.height;
+
+      // Caso 1: Sem recorte de fundo (apenas filtro de cor / brilho / contraste)
+      if (effectState.bgMode === 'none') {
+        effectsCtx.save();
+        effectsCtx.filter = buildCssColorFilterString();
+        effectsCtx.drawImage(rawCameraVideoElem, 0, 0, W, H);
+        effectsCtx.restore();
+        return;
+      }
+
+      // Caso 2: Desfoque ou Fundo Virtual com IA MediaPipe
+      ensureSelfieSegmentationLoaded();
+      if (selfieSegmentation && isSegmentationReady && !isSegmentationProcessing) {
+        isSegmentationProcessing = true;
+        try {
+          await selfieSegmentation.send({ image: rawCameraVideoElem });
+        } catch (err) {
+          // Fallback caso o modelo WASM ainda esteja baixando no primeiro segundo
+          effectsCtx.save();
+          effectsCtx.filter = buildCssColorFilterString();
+          effectsCtx.drawImage(rawCameraVideoElem, 0, 0, W, H);
+          effectsCtx.restore();
+        } finally {
+          isSegmentationProcessing = false;
+        }
+      }
+    }
+
+    async function swapActiveCameraTrack(newVideoTrack) {
+      if (!localStream || !newVideoTrack) return;
+
+      newVideoTrack.enabled = !isCamOff;
+
+      // Substitui a faixa de vídeo dentro do localStream (sem parar a câmera física!)
+      const currentTracks = localStream.getVideoTracks();
+      currentTracks.forEach(t => {
+        localStream.removeTrack(t);
+        if (t !== rawCameraVideoTrack) {
+          t.stop();
+        }
+      });
+      localStream.addTrack(newVideoTrack);
+
+      // Atualiza todos os elementos de vídeo locais
+      if (lobbyVideo) {
+        lobbyVideo.srcObject = localStream;
+        lobbyVideo.play().catch(() => {});
+      }
+      const localCardVideo = document.getElementById('video_local');
+      if (localCardVideo) {
+        localCardVideo.srcObject = localStream;
+        localCardVideo.play().catch(() => {});
+      }
+      if (settingsPreviewVideo && !settingsModal.classList.contains('hidden')) {
+        settingsPreviewVideo.srcObject = localStream;
+        settingsPreviewVideo.play().catch(() => {});
+      }
+
+      // Se não estiver compartilhando a tela no momento, envia a nova faixa para todos os convidados via WebRTC!
+      if (!isScreenSharing) {
+        for (const [, peerData] of peers.entries()) {
+          const sender = peerData.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (sender) {
+            await sender.replaceTrack(newVideoTrack).catch(e => console.warn('[Effects] replaceTrack warn:', e));
+          }
+        }
+      }
+    }
+
+    async function syncVisualEffectsPipeline() {
+      updateVisualEffectsBadges();
+
+      if (!rawCameraVideoTrack && localStream) {
+        registerRawCameraStream(localStream);
+      }
+      if (!rawCameraVideoTrack) return;
+
+      if (!isAnyVisualEffectActive()) {
+        // Desativa loop de processamento e restaura a faixa pura da câmera para economizar CPU/bateria
+        clearInterval(effectsLoopInterval);
+        effectsLoopInterval = null;
+        if (localStream.getVideoTracks()[0] !== rawCameraVideoTrack) {
+          await swapActiveCameraTrack(rawCameraVideoTrack);
+        }
+        return;
+      }
+
+      // Garante que o Canvas de processamento está ativo em 30 FPS
+      if (!effectsCanvas) {
+        effectsCanvas = document.createElement('canvas');
+        effectsCanvas.width = 640;
+        effectsCanvas.height = 360;
+        effectsCtx = effectsCanvas.getContext('2d');
+      }
+
+      if (!effectsLoopInterval) {
+        renderEffectsFrame();
+        effectsLoopInterval = setInterval(renderEffectsFrame, 1000 / 30);
+      }
+
+      if (!effectsStream || !effectsStream.active || effectsStream.getVideoTracks().length === 0 || effectsStream.getVideoTracks()[0].readyState === 'ended') {
+        effectsStream = effectsCanvas.captureStream(30);
+      }
+
+      const processedTrack = effectsStream.getVideoTracks()[0];
+      if (processedTrack && localStream.getVideoTracks()[0] !== processedTrack) {
+        await swapActiveCameraTrack(processedTrack);
+      }
+    }
+
+    // Eventos dos Botões de Atalho de Efeitos (Lobby e Barra Inferior da Sala)
+    if (btnLobbyEffects) {
+      btnLobbyEffects.addEventListener('click', () => openSettingsModal('effects'));
+    }
+    if (btnVisualEffects) {
+      btnVisualEffects.addEventListener('click', () => openSettingsModal('effects'));
+    }
+
+    // Seleção de Modo de Fundo (Desfoque / Cenários / Foto do Mac)
+    bgOptionBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-bg-mode');
+        if (mode === 'custom' && !customBgImageObj) {
+          if (inputCustomBgImage) inputCustomBgImage.click();
+          return;
+        }
+        effectState.bgMode = mode;
+        bgOptionBtns.forEach(b => b.classList.remove('ring-2', 'ring-blue-500'));
+        btn.classList.add('ring-2', 'ring-blue-500');
+        syncVisualEffectsPipeline();
+      });
+    });
+
+    // Upload de Foto Personalizada do Mac para Fundo Virtual
+    if (btnUploadCustomBg && inputCustomBgImage) {
+      btnUploadCustomBg.addEventListener('click', () => inputCustomBgImage.click());
+
+      inputCustomBgImage.addEventListener('change', e => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = new Image();
+          img.onload = () => {
+            customBgImageObj = img;
+            try {
+              if (ev.target.result.length < 2500000) {
+                localStorage.setItem('meet_custom_bg_dataurl', ev.target.result);
+              }
+            } catch (err) {}
+
+            effectState.bgMode = 'custom';
+            bgOptionBtns.forEach(b => b.classList.remove('ring-2', 'ring-blue-500'));
+            if (btnCustomBgTile) btnCustomBgTile.classList.add('ring-2', 'ring-blue-500');
+            syncVisualEffectsPipeline();
+            showToast('🖼️ Foto do Mac aplicada como fundo virtual!');
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Carrega foto personalizada salva anteriormente (se houver)
+    try {
+      const savedCustomBg = localStorage.getItem('meet_custom_bg_dataurl');
+      if (savedCustomBg) {
+        const img = new Image();
+        img.onload = () => { customBgImageObj = img; };
+        img.src = savedCustomBg;
+      }
+    } catch (e) {}
+
+    // Seleção de Filtros de Cor
+    colorFilterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        effectState.colorFilter = btn.getAttribute('data-color-filter') || 'none';
+        colorFilterBtns.forEach(b => b.classList.remove('ring-2', 'ring-blue-500'));
+        btn.classList.add('ring-2', 'ring-blue-500');
+        syncVisualEffectsPipeline();
+      });
+    });
+
+    // Sliders de Brilho e Contraste
+    if (sliderBrightness) {
+      sliderBrightness.addEventListener('input', () => {
+        effectState.brightness = Number(sliderBrightness.value) || 100;
+        if (lblBrightnessVal) lblBrightnessVal.textContent = `${effectState.brightness}%`;
+        syncVisualEffectsPipeline();
+      });
+    }
+
+    if (sliderContrast) {
+      sliderContrast.addEventListener('input', () => {
+        effectState.contrast = Number(sliderContrast.value) || 100;
+        if (lblContrastVal) lblContrastVal.textContent = `${effectState.contrast}%`;
+        syncVisualEffectsPipeline();
+      });
+    }
+
+    // Botão Resetar Todos os Efeitos
+    if (btnResetVisualEffects) {
+      btnResetVisualEffects.addEventListener('click', () => {
+        effectState.bgMode = 'none';
+        effectState.colorFilter = 'none';
+        effectState.brightness = 100;
+        effectState.contrast = 100;
+
+        if (sliderBrightness) sliderBrightness.value = '100';
+        if (sliderContrast) sliderContrast.value = '100';
+        if (lblBrightnessVal) lblBrightnessVal.textContent = '100%';
+        if (lblContrastVal) lblContrastVal.textContent = '100%';
+
+        bgOptionBtns.forEach(b => {
+          b.classList.toggle('ring-2', b.getAttribute('data-bg-mode') === 'none');
+          b.classList.toggle('ring-blue-500', b.getAttribute('data-bg-mode') === 'none');
+        });
+        colorFilterBtns.forEach(b => {
+          b.classList.toggle('ring-2', b.getAttribute('data-color-filter') === 'none');
+          b.classList.toggle('ring-blue-500', b.getAttribute('data-color-filter') === 'none');
+        });
+
+        syncVisualEffectsPipeline();
+        showToast('✨ Efeitos visuais restaurados para o original.');
+      });
+    }
+
     // Sair da Chamada
     btnLeaveCall.addEventListener('click', () => {
       if (isRecording) stopMeetingRecording();
+      clearInterval(effectsLoopInterval);
+      if (rawCameraVideoTrack) rawCameraVideoTrack.stop();
       if (localStream) localStream.getTracks().forEach(t => t.stop());
       if (localScreenStream) localScreenStream.getTracks().forEach(t => t.stop());
       if (ws) ws.close();
