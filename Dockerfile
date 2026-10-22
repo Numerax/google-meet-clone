@@ -1,5 +1,5 @@
-# Estágio 1: Build com Rust oficial
-FROM rust:1.82-slim as builder
+# Estágio 1: Build com a versão mais recente do Rust oficial (suporte a edition 2024)
+FROM rust:slim as builder
 
 WORKDIR /app
 

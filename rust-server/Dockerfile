@@ -1,21 +1,18 @@
-# Estágio 1: Build com Rust oficial
-FROM rust:1.80-slim as builder
+# Estágio 1: Build com a versão mais recente do Rust oficial (suporte a edition 2024)
+FROM rust:slim as builder
 
 WORKDIR /app
 
-# Copia dependências e código
-COPY Cargo.toml ./
+COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 
-# Compilação em modo release otimizado
 RUN cargo build --release
 
-# Estágio 2: Imagem final ultra enxuta (~20MB)
+# Estágio 2: Imagem final ultra leve de produção (~20MB)
 FROM debian:bookworm-slim
 
 WORKDIR /app
 
-# Copia o binário compilado
 COPY --from=builder /app/target/release/google-meet-clone-rust /app/server
 COPY ../public /app/public
 
