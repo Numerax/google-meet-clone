@@ -19,7 +19,7 @@
     }
   </style>
 </head>
-<body class="bg-[#202124] text-white min-h-screen flex flex-col font-sans overflow-hidden select-none">
+<body class="bg-[#202124] text-white h-screen w-screen flex flex-col font-sans overflow-hidden select-none">
 
   <!-- ================= LOBBY (TELA DE ENTRADA / GREEN ROOM) ================= -->
   <div id="lobbyScreen" class="fixed inset-0 bg-[#202124] z-50 flex items-center justify-center p-6">
@@ -85,10 +85,10 @@
 
 
   <!-- ================= SALA DE REUNIÃO ATIVA ================= -->
-  <div id="meetingRoom" class="hidden flex-1 flex flex-col h-screen overflow-hidden">
+  <div id="meetingRoom" class="hidden flex-1 flex flex-col h-full w-full overflow-hidden bg-[#202124]">
     
     <!-- Topbar Sutil -->
-    <header class="h-12 px-6 flex items-center justify-between text-xs text-gray-400 border-b border-white/5">
+    <header class="h-12 px-4 sm:px-6 flex items-center justify-between text-xs text-gray-400 border-b border-white/5 flex-shrink-0 z-30">
       <div class="flex items-center gap-3">
         <span class="font-medium text-white text-sm flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Google Meet
@@ -112,13 +112,13 @@
     </header>
 
     <!-- Conteúdo Principal: Grade de Vídeos + Lateral de Chat/Pessoas -->
-    <div class="flex-1 flex overflow-hidden p-4 gap-4 relative">
+    <div class="flex-1 min-h-0 min-w-0 flex overflow-hidden p-2 sm:p-4 gap-3 sm:gap-4 relative">
       
       <!-- Container das Reações Flutuantes -->
       <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none z-40"></div>
 
       <!-- Grade Dinâmica dos Participantes e Área Spotlight -->
-      <div id="videoGridContainer" class="flex-1 flex flex-col md:flex-row items-center justify-center overflow-hidden gap-3 relative">
+      <div id="videoGridContainer" class="flex-1 min-h-0 min-w-0 w-full h-full flex flex-col md:flex-row items-center justify-center overflow-y-auto md:overflow-hidden gap-3 relative">
         
         <!-- Área Spotlight (Apresentação de Tela ou Participante Fixado) -->
         <div id="spotlightArea" class="hidden flex-1 w-full h-full relative bg-[#18191a] rounded-2xl overflow-hidden border border-white/10 flex items-center justify-center shadow-2xl">
@@ -135,7 +135,7 @@
         </div>
 
         <!-- Grade Dinâmica dos Participantes -->
-        <div id="videoGrid" class="w-full h-full grid gap-4 p-2 transition-all duration-300 grid-cols-1">
+        <div id="videoGrid" class="w-full h-full min-h-0 min-w-0 grid gap-3 p-1 sm:p-2 transition-all duration-300 grid-cols-1">
           <!-- Os cards de vídeo são injetados dinamicamente aqui -->
         </div>
       </div>
@@ -178,7 +178,7 @@
     </div>
 
     <!-- ================= BARRA DE CONTROLES INFERIOR FLUTUANTE ================= -->
-    <footer class="h-20 bg-[#202124] px-6 flex items-center justify-between border-t border-white/5">
+    <footer class="h-20 bg-[#202124] px-3 sm:px-6 flex items-center justify-between border-t border-white/5 flex-shrink-0 z-30">
       
       <!-- Esquerda: Hora e Código da Reunião -->
       <div class="hidden sm:flex items-center gap-3 w-1/4">
@@ -188,65 +188,65 @@
       </div>
 
       <!-- Centro: Botões de Ação Principais -->
-      <div class="flex items-center justify-center gap-3 flex-1 sm:flex-initial">
+      <div class="flex items-center justify-center gap-1.5 sm:gap-3 flex-1 sm:flex-initial">
         
         <!-- Microfone -->
-        <button id="btnToggleMic" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Ativar/Desativar microfone">
-          <svg id="micIconOn" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-          <svg id="micIconOff" class="w-5 h-5 text-white hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/></svg>
+        <button id="btnToggleMic" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Ativar/Desativar microfone">
+          <svg id="micIconOn" class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+          <svg id="micIconOff" class="w-4 h-4 sm:w-5 sm:h-5 text-white hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/></svg>
         </button>
 
         <!-- Câmera -->
-        <button id="btnToggleCam" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Ativar/Desativar câmera">
-          <svg id="camIconOn" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-          <svg id="camIconOff" class="w-5 h-5 text-white hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2zM16 16.73L5.27 6H16v10.73z"/></svg>
+        <button id="btnToggleCam" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Ativar/Desativar câmera">
+          <svg id="camIconOn" class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+          <svg id="camIconOff" class="w-4 h-4 sm:w-5 sm:h-5 text-white hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2zM16 16.73L5.27 6H16v10.73z"/></svg>
         </button>
 
         <!-- Levantar a Mão -->
-        <button id="btnRaiseHand" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Levantar a mão">
-          <span class="text-xl">✋</span>
+        <button id="btnRaiseHand" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Levantar a mão">
+          <span class="text-base sm:text-xl">✋</span>
         </button>
 
         <!-- Menu de Reações -->
         <div class="relative">
-          <button id="btnReactionsMenu" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Enviar reação">
-            <span class="text-lg">😊</span>
+          <button id="btnReactionsMenu" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Enviar reação">
+            <span class="text-base sm:text-lg">😊</span>
           </button>
           
           <!-- Popover de Emojis -->
-          <div id="reactionsPopup" class="hidden absolute bottom-16 left-1/2 -translate-x-1/2 bg-[#3c4043] border border-white/10 rounded-full px-3 py-1.5 shadow-2xl flex items-center gap-2">
-            <button class="reaction-btn text-xl hover:scale-125 transition">💖</button>
-            <button class="reaction-btn text-xl hover:scale-125 transition">👍</button>
-            <button class="reaction-btn text-xl hover:scale-125 transition">🎉</button>
-            <button class="reaction-btn text-xl hover:scale-125 transition">👏</button>
-            <button class="reaction-btn text-xl hover:scale-125 transition">😂</button>
-            <button class="reaction-btn text-xl hover:scale-125 transition">😮</button>
+          <div id="reactionsPopup" class="hidden absolute bottom-14 sm:bottom-16 left-1/2 -translate-x-1/2 bg-[#3c4043] border border-white/10 rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 shadow-2xl flex items-center gap-1.5 sm:gap-2 z-50">
+            <button class="reaction-btn text-lg sm:text-xl hover:scale-125 transition">💖</button>
+            <button class="reaction-btn text-lg sm:text-xl hover:scale-125 transition">👍</button>
+            <button class="reaction-btn text-lg sm:text-xl hover:scale-125 transition">🎉</button>
+            <button class="reaction-btn text-lg sm:text-xl hover:scale-125 transition">👏</button>
+            <button class="reaction-btn text-lg sm:text-xl hover:scale-125 transition">😂</button>
+            <button class="reaction-btn text-lg sm:text-xl hover:scale-125 transition">😮</button>
           </div>
         </div>
 
         <!-- Compartilhar Tela -->
-        <button id="btnScreenShare" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Apresentar agora">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.11-.9-2-2-2H4c-1.11 0-2 .89-2 2v10c0 1.1.89 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6zm9 3l3 3h-2v3h-2v-3H10l3-3z"/></svg>
+        <button id="btnScreenShare" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Apresentar agora">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.11-.9-2-2-2H4c-1.11 0-2 .89-2 2v10c0 1.1.89 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6zm9 3l3 3h-2v3h-2v-3H10l3-3z"/></svg>
         </button>
 
         <!-- Adicionar Participante Demo (Simulação rápida para teste individual) -->
-        <button id="btnAddDemoPeer" class="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md" title="Simular entrada de participante">+👤</button>
+        <button id="btnAddDemoPeer" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#3c4043] hover:bg-[#474a4d] flex items-center justify-center text-white transition shadow-md text-xs sm:text-base font-bold" title="Simular entrada de participante">+👤</button>
 
         <!-- Sair da Chamada -->
-        <button id="btnLeaveCall" class="h-12 px-6 rounded-full bg-[#ea4335] hover:bg-[#d93025] flex items-center justify-center text-white font-medium transition shadow-md gap-2" title="Sair da chamada">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 0 1 0-1.37C3.42 8.5 7.44 6.8 12 6.8c4.56 0 8.58 1.7 11.71 4.91.38.38.38.99 0 1.37l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-          <span class="text-xs font-semibold">Sair</span>
+        <button id="btnLeaveCall" class="h-10 px-3 sm:h-12 sm:px-6 rounded-full bg-[#ea4335] hover:bg-[#d93025] flex items-center justify-center text-white font-medium transition shadow-md gap-1.5 sm:gap-2" title="Sair da chamada">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 0 1 0-1.37C3.42 8.5 7.44 6.8 12 6.8c4.56 0 8.58 1.7 11.71 4.91.38.38.38.99 0 1.37l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+          <span class="text-[11px] sm:text-xs font-semibold">Sair</span>
         </button>
       </div>
 
       <!-- Direita: Informações, Pessoas e Chat (Visível em Mobile e Desktop) -->
-      <div class="flex items-center justify-end gap-2 sm:gap-3 w-auto sm:w-1/4">
-        <button id="btnToggleSideChat" class="w-10 h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Chat com todos">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+      <div class="flex items-center justify-end gap-1.5 sm:gap-3 w-auto sm:w-1/4">
+        <button id="btnToggleSideChat" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Chat com todos">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
           <span id="unreadBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-blue-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center shadow-lg">1</span>
         </button>
-        <button id="btnToggleSidePeople" class="w-10 h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Mostrar participantes">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        <button id="btnToggleSidePeople" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-[#3c4043] flex items-center justify-center text-gray-300 hover:text-white transition relative" title="Mostrar participantes">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         </button>
       </div>
 
@@ -825,7 +825,7 @@
     function createVideoCard(id, name, stream, isLocal) {
       const card = document.createElement('div');
       card.id = `card_${id}`;
-      card.className = 'relative bg-[#3c4043] rounded-2xl overflow-hidden shadow-xl border border-white/5 flex items-center justify-center transition-all duration-300 group';
+      card.className = 'relative bg-[#3c4043] rounded-2xl overflow-hidden shadow-xl border border-white/5 flex items-center justify-center transition-all duration-300 group w-full h-full max-h-full min-h-0 min-w-0';
 
       const video = document.createElement('video');
       video.id = `video_${id}`;
@@ -905,28 +905,30 @@
 
       if (isSpotlightActive) {
         // Modo Spotlight: os cards ficam em uma faixa responsiva (vertical no desktop, horizontal no mobile)
-        videoGrid.className = 'w-full md:w-64 max-h-36 md:max-h-full flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto p-1 flex-shrink-0';
+        videoGrid.className = 'w-full md:w-64 max-h-36 md:max-h-full flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto p-1 flex-shrink-0 min-h-0 min-w-0';
         for (const child of videoGrid.children) {
-          child.classList.remove('h-full');
+          child.classList.remove('h-full', 'w-full', 'max-h-full');
           child.classList.add('min-w-[140px]', 'md:min-w-0', 'h-28', 'md:h-36', 'flex-shrink-0');
         }
       } else {
-        // Modo Grade Normal
+        // Modo Grade Normal: todos os cards devem ocupar 100% da altura e largura da sua célula
         for (const child of videoGrid.children) {
           child.classList.remove('min-w-[140px]', 'md:min-w-0', 'h-28', 'md:h-36', 'flex-shrink-0');
-          child.classList.add('h-full');
+          child.classList.add('w-full', 'h-full', 'max-h-full', 'min-h-0', 'min-w-0');
         }
-        videoGrid.className = 'w-full h-full grid gap-4 p-2 transition-all duration-300';
-        if (count === 1) {
-          videoGrid.classList.add('grid-cols-1');
+        videoGrid.className = 'w-full h-full min-h-0 min-w-0 grid gap-3 p-1 sm:p-2 transition-all duration-300';
+        if (count <= 1) {
+          videoGrid.classList.add('grid-cols-1', 'grid-rows-1', 'max-w-5xl', 'mx-auto');
         } else if (count === 2) {
-          videoGrid.classList.add('grid-cols-1', 'md:grid-cols-2');
+          // 2 participantes: no celular 1 col x 2 lin; no Desktop (Mac) 2 col x 1 lin lado a lado
+          videoGrid.classList.add('grid-cols-1', 'md:grid-cols-2', 'grid-rows-2', 'md:grid-rows-1');
         } else if (count <= 4) {
-          videoGrid.classList.add('grid-cols-2');
+          // Até 4 participantes: grade 2x2
+          videoGrid.classList.add('grid-cols-2', 'grid-rows-2');
         } else if (count <= 6) {
-          videoGrid.classList.add('grid-cols-2', 'md:grid-cols-3');
+          videoGrid.classList.add('grid-cols-2', 'md:grid-cols-3', 'grid-rows-3', 'md:grid-rows-2');
         } else {
-          videoGrid.classList.add('grid-cols-3', 'md:grid-cols-4');
+          videoGrid.classList.add('grid-cols-2', 'md:grid-cols-4');
         }
       }
     }
